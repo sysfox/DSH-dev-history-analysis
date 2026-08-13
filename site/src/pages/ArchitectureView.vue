@@ -6,7 +6,7 @@ import DataTable from '../components/DataTable.vue'
 import MermaidBlock from '../components/MermaidBlock.vue'
 import HashChip from '../components/HashChip.vue'
 import { doc } from '../lib/data'
-import { inlineMd } from '../lib/util'
+import { inlineMd, hashTokens } from '../lib/util'
 
 const gov = doc.tables.find((t) => JSON.stringify(t.headers) === JSON.stringify(['阶段', '日期', '关键提交', '状态载体', '治理动作']))
 const adr = doc.tables.find((t) => t.path.includes('ADR 0001–0017'))
@@ -86,7 +86,9 @@ const deepDives = [
             <p class="gov-action">{{ r[4] }}</p>
             <div class="gov-meta">
               <span class="mono dim">载体：{{ r[3] }}</span>
-              <HashChip v-if="r[2]" :hash="r[2]" />
+              <span v-if="hashTokens(r[2]).length" class="gov-hashes">
+                <HashChip v-for="(h, hi) in hashTokens(r[2])" :key="hi" :hash="h" />
+              </span>
             </div>
           </div>
         </div>
@@ -292,6 +294,11 @@ const deepDives = [
   gap: 8px;
   margin-top: 10px;
   flex-wrap: wrap;
+}
+.gov-hashes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 .gov-meta .dim {
   font-size: 10.5px;
