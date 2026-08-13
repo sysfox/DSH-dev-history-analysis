@@ -76,8 +76,13 @@ const readerSections = ref([])
 
 function createReaderSections() {
   const starts = [0]
+  let inFence = false
   rawLines.forEach((line, index) => {
-    if (index > 0 && /^##\s+/.test(line)) starts.push(index)
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence
+      return
+    }
+    if (!inFence && index > 0 && /^##\s+/.test(line)) starts.push(index)
   })
   return starts.map((start, index) => {
     const end = starts[index + 1] ?? rawLines.length
@@ -121,10 +126,9 @@ const query = ref('')
 const searchResults = computed(() => {
   const q = query.value.trim().toLowerCase()
   if (!q) return []
-  const lines = rawMd.split('\n')
   const out = []
-  for (let i = 0; i < lines.length && out.length < 150; i++) {
-    const l = lines[i]
+  for (let i = 0; i < rawLines.length && out.length < 150; i++) {
+    const l = rawLines[i]
     if (l.trim() && l.toLowerCase().includes(q)) {
       out.push({ line: i + 1, text: l.trim().slice(0, 90) })
     }
@@ -141,9 +145,20 @@ function headingForLine(line) {
   return best
 }
 
-function jumpToLine(line) {
+function sectionForLine(line) {
+  return readerSections.value.find((section) => line >= section.startLine && line <= section.endLine)
+}
+
+function sectionForId(id) {
+  const heading = headings.find((h) => slugMap.get(h.line) === id)
+  return heading ? sectionForLine(heading.line) : null
+}
+
+async function jumpToLine(line) {
   const h = headingForLine(line)
   const id = h ? slugMap.get(h.line) : null
+  await renderSection(sectionForLine(h?.line || line))
+  await nextTick()
   const el = id ? document.getElementById(id) : null
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -160,8 +175,10 @@ function flash(el) {
   setTimeout(() => el.classList.remove('flash'), 1600)
 }
 
-function jumpToHash(hash) {
+async function jumpToHash(hash) {
   if (!hash) return
+  await renderSection(sectionForId(hash.slice(1)))
+  await nextTick()
   const el = document.getElementById(hash.slice(1))
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -194,8 +211,10 @@ const toc = computed(() => {
 const activeId = ref('')
 let observer = null
 let mermaidObserver = null
+let sectionObserver = null
 
 function setupSpy() {
+  observer && observer.disconnect()
   observer = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
@@ -211,7 +230,6 @@ function setupSpy() {
 
 // ---- 渲染 ----
 const contentRef = ref(null)
-const renderedHtml = ref('')
 const rendered = ref(false)
 const stats = computed(() => ({
   lines: doc.meta.totalLines,
@@ -222,61 +240,114 @@ const stats = computed(() => ({
   code: doc.codeBlocks.length,
 }))
 
-async function renderDoc() {
-  renderedHtml.value = md.render(rawMd)
-  rendered.value = true
-  await nextTick()
-  const el = contentRef.value
+function setSectionEl(section, el) {
   if (!el) return
+  section.el = el
+  el.__readerSection = section
+  if (sectionObserver) sectionObserver.observe(el)
+}
 
-  // Mermaid 图按可视区域懒渲染，避免原文页首屏一次启动全部图表。
-  const hosts = [...el.querySelectorAll('.mermaid-host[data-mermaid]')]
-  const renderHost = async (host) => {
-    if (host.dataset.rendered) return
-    host.dataset.rendered = 'loading'
-    const code = host.textContent || ''
-    host.textContent = ''
-    host.classList.add('is-pending')
-    try {
-      host.innerHTML = await renderMermaidSvg(code)
-      host.classList.remove('is-pending')
-      host.dataset.rendered = 'true'
-    } catch (e) {
-      host.classList.remove('is-pending')
-      host.innerHTML = `<pre class="mermaid-error">mermaid 渲染失败：${escapeHtml(String(e.message || e))}</pre>`
-      host.dataset.rendered = 'error'
-    }
+function resolveInternalLinks(root) {
+  const norm = (s) => s.toLowerCase().replace(/[·（）()、，。：:*/."'“”’‘<>#%]+/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
+  root.querySelectorAll('a[href^="#"]').forEach((a) => {
+    const target = a.getAttribute('href').slice(1)
+    const known = headings.some((h) => slugMap.get(h.line) === target)
+    if (known || document.getElementById(target)) return
+    const wanted = norm(target)
+    const hit = headings.find((h) => norm(h.text) === wanted)
+    if (hit) a.setAttribute('href', `#${slugMap.get(hit.line)}`)
+  })
+}
+
+function onContentClick(e) {
+  const link = e.target?.closest?.('a[href^="#"]')
+  if (!link) return
+  const target = link.getAttribute('href')?.slice(1)
+  if (!target || !sectionForId(target)) return
+  e.preventDefault()
+  jumpToHash(`#${target}`)
+}
+
+async function renderMermaidHost(host) {
+  if (host.dataset.rendered) return
+  host.dataset.rendered = 'loading'
+  const code = host.textContent || ''
+  host.textContent = ''
+  host.classList.add('is-pending')
+  try {
+    host.innerHTML = await renderMermaidSvg(code)
+    host.classList.remove('is-pending')
+    host.dataset.rendered = 'true'
+  } catch (e) {
+    host.classList.remove('is-pending')
+    host.innerHTML = `<pre class="mermaid-error">mermaid 渲染失败：${escapeHtml(String(e.message || e))}</pre>`
+    host.dataset.rendered = 'error'
   }
+}
 
-  if ('IntersectionObserver' in window) {
+function observeMermaidHosts(root) {
+  const hosts = [...root.querySelectorAll('.mermaid-host[data-mermaid]')]
+  if (!hosts.length) return
+  if (!mermaidObserver && 'IntersectionObserver' in window) {
     mermaidObserver = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue
           mermaidObserver.unobserve(entry.target)
-          renderHost(entry.target)
+          renderMermaidHost(entry.target)
         }
       },
       { rootMargin: '360px 0px' }
     )
-    hosts.forEach((host) => mermaidObserver.observe(host))
-  } else {
-    await Promise.all(hosts.map(renderHost))
   }
+  if (mermaidObserver) hosts.forEach((host) => mermaidObserver.observe(host))
+  else hosts.forEach((host) => renderMermaidHost(host))
+}
 
-  // 内部锚点解析：找不到 id 时按 slug 模糊匹配最近的标题
-  el.querySelectorAll('a[href^="#"]').forEach((a) => {
-    const target = a.getAttribute('href').slice(1)
-    if (document.getElementById(target)) return
-    const norm = (s) => s.toLowerCase().replace(/[·（）()、，。：:*/."'“”’‘<>#%]+/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
-    const wanted = norm(target)
-    const hit = headings.find((h) => norm(h.text) === wanted)
-    if (hit) a.setAttribute('href', `#${slugMap.get(hit.line)}`)
-  })
+async function renderSection(section) {
+  if (!section || section.loading || section.loaded) return
+  section.loading = true
+  try {
+    section.html = md.render(section.source, { lineOffset: section.startLine - 1 })
+    section.loaded = true
+    await nextTick()
+    if (section.el) {
+      resolveInternalLinks(section.el)
+      observeMermaidHosts(section.el)
+    }
+    setupSpy()
+  } catch (e) {
+    section.html = `<p class="mermaid-error">文档片段渲染失败：${escapeHtml(String(e.message || e))}</p>`
+  } finally {
+    section.loading = false
+  }
+}
 
+function setupSectionObserver() {
+  if (!('IntersectionObserver' in window)) {
+    readerSections.value.forEach((section) => renderSection(section))
+    return
+  }
+  sectionObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) renderSection(entry.target.__readerSection)
+      }
+    },
+    { rootMargin: '720px 0px' }
+  )
+  readerSections.value.forEach((section) => section.el && sectionObserver.observe(section.el))
+}
+
+async function renderDoc() {
+  readerSections.value = createReaderSections()
+  rendered.value = true
+  await nextTick()
+  const el = contentRef.value
+  if (!el) return
+  setupSectionObserver()
+  await Promise.all(readerSections.value.slice(0, 2).map(renderSection))
   setupSpy()
-
-  // 路由 hash 直达
   if (route.hash) jumpToHash(route.hash)
 }
 
@@ -292,6 +363,7 @@ watch(
 onBeforeUnmount(() => {
   observer && observer.disconnect()
   mermaidObserver && mermaidObserver.disconnect()
+  sectionObserver && sectionObserver.disconnect()
 })
 
 // 回到顶部
@@ -374,7 +446,20 @@ function toTop() {
 
       <!-- 正文 -->
       <main ref="contentRef" class="reader-main">
-        <div v-if="rendered" class="md-body" v-html="renderedHtml"></div>
+        <div v-if="rendered" class="md-body" @click="onContentClick">
+          <section
+            v-for="section in readerSections"
+            :key="section.id"
+            :ref="(el) => setSectionEl(section, el)"
+            class="md-section"
+            :class="{ loaded: section.loaded }"
+            :data-section-id="section.id"
+            :style="{ '--section-min-height': `${section.estimatedHeight}px` }"
+          >
+            <div v-if="section.html" v-html="section.html"></div>
+            <div v-else class="section-loading">文档片段将在接近视口时加载…</div>
+          </section>
+        </div>
         <div v-else class="reading">正在渲染 5,567 行…</div>
         <button class="to-top btn" @click="toTop">↑ 回到顶部</button>
       </main>
@@ -564,6 +649,22 @@ function toTop() {
 }
 .reader-main {
   min-width: 0;
+}
+.md-section {
+  min-height: var(--section-min-height);
+  content-visibility: auto;
+  contain-intrinsic-size: auto var(--section-min-height);
+}
+.md-section.loaded {
+  min-height: 0;
+}
+.section-loading {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  color: var(--ink-4);
+  font-family: var(--font-m);
+  font-size: 11px;
 }
 .reading {
   color: var(--ink-4);
