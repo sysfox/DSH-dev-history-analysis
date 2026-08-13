@@ -1,0 +1,25 @@
+{
+  "name": "dsh-history-site",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "DEVELOPMENT-HISTORY.md 可视化网站 —— DeepSeek Harness 65 天开发历程",
+  "scripts": {
+    "extract": "node scripts/extract.mjs",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "echarts": "^5.6.0",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0",
+    "mermaid": "^11.6.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.3.5"
+  }
+}

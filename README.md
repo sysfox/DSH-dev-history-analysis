@@ -8,9 +8,9 @@
 
 ## 主要产出
 
-### `DEVELOPMENT-HISTORY.md` —— 主文档（唯一交付物）
+### `DEVELOPMENT-HISTORY.md` —— 主文档
 
-一份 5,572 行的中文开发史长文，完整还原 `dsh` 从空仓库到 npm 公开的 65 天弧线，内容要点：
+一份 5,567 行的中文开发史长文，完整还原 `dsh` 从空仓库到 npm 公开的 65 天弧线，内容要点：
 
 | 维度 | 关键数据 |
 |---|---|
@@ -37,7 +37,27 @@
 ```text
 DSH-dev-history-analysis/
 ├── README.md                    # 本文件
-└── DEVELOPMENT-HISTORY.md       # 主文档（最终交付物）
+├── DEVELOPMENT-HISTORY.md       # 主文档（最终交付物）
+└── site/                        # 可视化网站（Vue 3 + Vite + ECharts）
+    ├── scripts/extract.mjs      # 从主文档提取结构化 JSON（src/data/doc.json）
+    └── src/
+        ├── pages/               # 概览 / 时间线 / 包结构 / 架构 / 基建 / 文档生态 / 贡献者 / 原文
+        ├── components/          # 天际线、图表、表格、mermaid、callout 等组件
+        ├── lib/                 # 数据访问层与 mermaid 主题
+        └── data/                # 提取出的结构化数据（domains.json 为人工整理）
+```
+
+## 可视化网站（`site/`）
+
+基于主文档全文的交互式可视化：65 天天际线、五阶段、49 包组 sunburst、ADR/RFC/门禁表、
+15 个 CI workflow、发布序列、贡献者矩阵，以及整篇 Markdown 的在线阅读器（搜索 + 目录 + mermaid 渲染）。
+
+```bash
+cd site
+npm install
+npm run dev        # 本地预览 → http://localhost:5173
+npm run build      # 生产构建 → dist/
+npm run extract    # 重新从 DEVELOPMENT-HISTORY.md 提取数据
 ```
 
 ## 分析方法论

@@ -1,0 +1,179 @@
+[
+  {
+    "id": 1,
+    "name": "核心循环",
+    "scope": "core/*",
+    "blurb": "产品 API 主轴：agent 定义 Agent 是什么，agent-loop 定义默认驱动循环，session 定义「模型可见 ⟺ 已记录」契约，tools 定义作用域化工具注册与守卫执行管线。不直接产生能力，而是所有能力的挂载点。",
+    "milestone": { "hash": "d02e9f1bd6", "date": "06-20", "text": "模块化层级重组，packages/core 诞生（1,564 提交，全库第二）" },
+    "groups": [
+      {
+        "name": "core",
+        "packages": ["agent", "agent-loop", "agent-default-model", "agent-tool-presentation", "session", "system-prompt", "tools", "scope"]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "LLM 族",
+    "scope": "llm/* + LLM 侧 test-support",
+    "blurb": "全库最早的两个包组之一（与 session 并列，6/11）。演进主线是「词汇中性化」：先 provider 中立词汇，再 deepseek / pi-ai 双实现验证，随后补重试与 token 计量；测试侧用 mock-server 与 replay 支撑无 key 的确定性验证。",
+    "milestone": { "hash": "d5a1d9bb75", "date": "06-11", "text": "llm 与 session 同日首提交（518 提交）；ADR 0010 双实现" },
+    "groups": [
+      { "name": "llm", "packages": ["llm", "llm-deepseek", "llm-pi-ai", "llm-retry", "token-meter"] },
+      { "name": "test-support", "packages": ["llm-replay", "llm-mock-server"] }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "工具层",
+    "scope": "dsh-tools 与全部 dsh-tool-*",
+    "blurb": "「一个能力缝 → 一个模型侧工具」的配对律：工具包与被消费的缝同组相邻，工具的 UI render intent 在设计期决定。22 个 dsh-tool-* 包 + 中枢 dsh-tools，分布在 14 个组中。",
+    "milestone": { "hash": "46e31d8481", "date": "06-29", "text": "todo_write 落地，第一个独立工具包" },
+    "groups": [
+      { "name": "core", "packages": ["tools"] },
+      { "name": "interaction", "packages": ["tool-ask-user"] },
+      { "name": "shell", "packages": ["tool-bash", "tool-bash-persistent", "tool-pwsh"] },
+      { "name": "guard", "packages": ["tool-call-timeout-policy"] },
+      { "name": "extensions", "packages": ["tool-cordis"] },
+      { "name": "fs", "packages": ["tool-fs", "tool-fs-search", "tool-str-replace-editor"] },
+      { "name": "goal", "packages": ["tool-goal"] },
+      { "name": "jobs", "packages": ["tool-jobs"] },
+      { "name": "lsp", "packages": ["tool-lsp"] },
+      { "name": "session-query", "packages": ["tool-session-query"] },
+      { "name": "skill", "packages": ["tool-skill"] },
+      { "name": "subagent", "packages": ["tool-subagent", "tool-subagent-control", "tool-subagent-report"] },
+      { "name": "terminal", "packages": ["tool-terminal"] },
+      { "name": "todo", "packages": ["tool-todo"] },
+      { "name": "web", "packages": ["tool-web"] },
+      { "name": "workflow", "packages": ["tool-workflow", "tool-ralph"] }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "执行与沙箱",
+    "scope": "shell / subprocess / code-runtime / sandbox / terminal / e2b",
+    "blurb": "执行面按粒度分三层演进：命令层（bash 缝 6/12）、进程层（subprocess 7/26）、代码层（code-runtime 7/08）；约束面有 sandbox 与 E2B 云沙箱 POC；交互面有 PTY 终端族。「能力缝」纪律贯彻最彻底的领域之一。",
+    "milestone": { "hash": "8b5a3ef730", "date": "06-12", "text": "bash 执行接缝三件套，全库第一个执行类缝" },
+    "groups": [
+      { "name": "shell", "packages": ["shell", "shell-env", "bash-local", "bash-sandbox", "pwsh-local", "pwsh-sandbox", "tool-bash", "tool-bash-persistent", "tool-pwsh"] },
+      { "name": "subprocess", "packages": ["subprocess", "subprocess-local"] },
+      { "name": "code-runtime", "packages": ["code-runtime", "code-runtime-worker-thread"] },
+      { "name": "sandbox", "packages": ["sandbox", "sandbox-local", "sandbox-policy", "sandbox-windows-acl"] },
+      { "name": "terminal", "packages": ["terminal", "terminal-bash", "tool-terminal"] },
+      { "name": "e2b", "packages": ["e2b", "fs-e2b", "subprocess-e2b"] }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "文件与 LSP",
+    "scope": "fs/*、lsp/*",
+    "blurb": "fs 是「策略与实现分离」的样板：读写能力归 seam，观察策略独立成包，沙箱约束独立成后端，工具侧再按交互形态拆三个 Consumer。lsp 验证「通用 stdio provider」模式：一个协议适配器服务多个语言服务器。",
+    "milestone": { "hash": "5e01564afb", "date": "06-22", "text": "fs 能力族诞生（seam + local + sandbox + 观察策略）" },
+    "groups": [
+      { "name": "fs", "packages": ["fs", "fs-local", "fs-sandbox", "fs-observation-policy", "tool-fs", "tool-fs-search", "tool-str-replace-editor"] },
+      { "name": "lsp", "packages": ["lsp", "lsp-stdio", "tool-lsp"] }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "会话数据",
+    "scope": "session/*、session-query/*、storage、workspace、attachment、spill",
+    "blurb": "贯彻「模型可见 ⟺ 已记录」铁律：持久化双后端（jsonl / sqlite）、投影派生视图、OpenTelemetry 遥测、三种标题策略、四类检索能力。7/30 折叠把 session 家族 12 包收拢为一组，是「组内多角色」形态的极致样本。",
+    "milestone": { "hash": "7e445c3a67", "date": "07-30", "text": "session 家族 12 包折叠入 packages/session/（13 子包，全库第二多）" },
+    "groups": [
+      { "name": "session", "packages": ["session", "session-persistence", "session-persistence-jsonl", "session-persistence-sqlite", "session-projection", "session-projection-cache", "session-title", "session-title-llm", "session-title-first-prompt-llm", "session-title-all-prompts-llm", "session-telemetry", "session-telemetry-otel", "session-stats", "session-checkpoint-policy"] },
+      { "name": "session-query", "packages": ["session-query", "session-query-sqlite", "session-log-export", "tool-session-query"] },
+      { "name": "storage", "packages": ["storage", "storage-domain", "storage-json", "storage-sqlite"] },
+      { "name": "workspace", "packages": ["workspace"] },
+      { "name": "attachment", "packages": ["attachment", "attachment-local"] },
+      { "name": "spill", "packages": ["spill", "spill-local", "spill-policy"] }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "子代理与编排",
+    "scope": "subagent/*、workflow/*、jobs、goal、schedule、plan",
+    "blurb": "subagent 是「provider 多样化」的极致：进程内三形态 + 四个外部适配器（ACP / Claude Code / Codex / dsh SDK），工具侧拆出委派、控制、回报三个 Consumer。编排层各司其职：workflow 脚本化编排、goal 目标持久化、jobs 后台任务、schedule 定时跟进、plan 把「计划」做成记录状态。",
+    "milestone": { "hash": "1a81f2cccd", "date": "06-21", "text": "subagent 三件套落地（641 提交，全库第三）" },
+    "groups": [
+      { "name": "subagent", "packages": ["subagent", "subagent-in-process-driver", "subagent-spawn-in-process", "subagent-fork-in-process", "subagent-acp", "subagent-claude-code", "subagent-codex", "subagent-dsh-sdk", "tool-subagent", "tool-subagent-control", "tool-subagent-report"] },
+      { "name": "workflow", "packages": ["workflow", "workflow-worker-thread", "tool-workflow", "tool-ralph"] },
+      { "name": "jobs", "packages": ["jobs", "jobs-local", "tool-jobs"] },
+      { "name": "goal", "packages": ["goal", "goal-round-driver", "command-goal", "tool-goal"] },
+      { "name": "schedule", "packages": ["schedule"] },
+      { "name": "plan", "packages": ["plan-mode"] }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "技能与上下文",
+    "scope": "skill/*、context、persona、token-meter",
+    "blurb": "共同回答「模型每次看到什么」：skill 是典型三件套（注册表 + 本地实现 + 目录/加载工具），context 按来源拆包（时间、tmux 会话、工作区指令、会话引用），全部是「模型可见输入」，因此必须与会话日志联动。persona 不是独立能力，而是每会话 agent 组合的产物。",
+    "milestone": { "hash": "6292d52236", "date": "07-10", "text": "skill 三件套落地（222 提交）" },
+    "groups": [
+      { "name": "skill", "packages": ["skill", "skill-filesystem", "skill-badge", "tool-skill"] },
+      { "name": "context", "packages": ["time-context", "tmux-context", "agent-instructions", "session-reference"] },
+      { "name": "preset", "packages": ["agent-presets", "persona"] },
+      { "name": "llm", "packages": ["token-meter"] }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "安全与治理",
+    "scope": "guard、sandbox-policy、permission-presets、credentials、settings、identity",
+    "blurb": "「分层而非单点」：循环卫生在 guard，进程约束在 sandbox（策略 + 后端），授权交互在 interaction，凭据在 credentials（引用而非明文），用户偏好与身份在 settings / identity。这些包几乎不产生模型可见的新能力，而是约束既有能力。",
+    "milestone": { "hash": "db26ef479d", "date": "07-08", "text": "guard 组诞生：重复调用提醒 + 工具超时执行器" },
+    "groups": [
+      { "name": "guard", "packages": ["repeat-tool-reminder", "timeout-policy"] },
+      { "name": "sandbox", "packages": ["sandbox-policy", "sandbox-windows-acl"] },
+      { "name": "interaction", "packages": ["permission-presets", "user-approval", "tool-ask-user", "user-questions", "commands"] },
+      { "name": "credentials", "packages": ["credentials", "credentials-local"] },
+      { "name": "settings", "packages": ["settings", "settings-file"] },
+      { "name": "identity", "packages": ["anonymous-user-id"] }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Web GUI 两半",
+    "scope": "client/*、host/*、web/*、interaction",
+    "blurb": "7/19 的 GUI 骨架一次创建 apps/web、apps/cli 与 packages/client、packages/host。浏览器半（client，2,241 提交，全库最大）承载 shell、wire、对象服务、slots 与 31 个 ui-* 插件；宿主半（host）承载 API gateway 与 HTTP 路由；中间以 RPC 协议沟通。",
+    "milestone": { "hash": "a6a3807a07", "date": "07-19", "text": "GUI 骨架提交：apps/web + packages/client + packages/host 一次落位" },
+    "groups": [
+      { "name": "client", "packages": ["connection", "runtime", "modules", "hmr", "locale", "schema-form", "web", "web-react", "ui-agent-preset", "ui-settings", "ui-settings-general", "ui-settings-models", "ui-settings-plugins", "ui-settings-plugin-inventory", "ui-conversation", "ui-message-feedback", "ui-input-trigger", "ui-trajectory", "ui-subagent", "ui-goal", "ui-plan", "ui-jobs", "ui-workflow-run", "ui-skill", "ui-permission-presets", "ui-user-questions", "ui-attachment", "ui-workspace", "ui-deliverables", "ui-directory-picker-browse", "ui-directory-picker-native", "ui-layout", "ui-sidebar", "ui-slots", "ui-primitives", "ui-theme", "ui-tool", "ui-model-selection", "ui-commands"] },
+      { "name": "host", "packages": ["webserver", "apiproxy", "frontend-static", "plugin-inventory", "directory-picker", "directory-picker-auto", "directory-picker-browse", "directory-picker-native"] },
+      { "name": "web", "packages": ["web", "web-fetch-http", "web-search-deepseek", "web-search-exa", "web-search-perplexity", "tool-web"] },
+      { "name": "interaction", "packages": ["commands", "user-questions"] }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "外部协议",
+    "scope": "sdk/*、acp/*、hooks/*、mcp",
+    "blurb": "外部面四条协议线：ACP（自动化，6/16 最早之一）、JSON-RPC SDK（进程外运行时）、Claude Code / Codex hooks（钩子桥，线协议抽成独立包 hook-protocol）、MCP（客户端接入）。sdk 的语义在 7/30 经历过「改名澄清」（旧 sdk/ → scaffold/）。",
+    "milestone": { "hash": "fb9636db44", "date": "06-16", "text": "ACP bridge 起步，最早的协议面之一" },
+    "groups": [
+      { "name": "sdk", "packages": ["sdk-protocol", "sdk-server", "sdk-client"] },
+      { "name": "acp", "packages": ["acp"] },
+      { "name": "hooks", "packages": ["hook-protocol", "hooks-claude-code", "hooks-codex"] },
+      { "name": "mcp", "packages": ["mcp-client"] },
+      { "name": "examples", "packages": ["agent-spine-demo", "acp-demo", "sdk-jsonrpc-demo"] }
+    ]
+  },
+  {
+    "id": 12,
+    "name": "发布与自举",
+    "scope": "bundle/*、boot、api/*、typert/*、extensions、test-support、util、runtime-diagnostics",
+    "blurb": "回答「harness 如何发布自己」：util 提供零依赖原语 → typert 生成类型图 → api 组装远程 BFF → bundle 组合成可安装的 profile 补丁层；extensions 让 agent 能挂载/卸载自己的插件；test-support 提供无 key 快照与冒烟支撑发布质量门。8/13 当天 10 个发布/许可提交与命名契约同日完成。",
+    "milestone": { "hash": "d6a2ab30c8", "date": "06-21", "text": "dsh-brand 抽出，util 组首个包（Branded 类型起源）" },
+    "groups": [
+      { "name": "util", "packages": ["brand", "atomic-write", "home-paths", "launch-environment", "native-command", "output-retention", "timeout"] },
+      { "name": "boot", "packages": ["app-boot", "cmdline"] },
+      { "name": "bundle", "packages": ["base", "headless", "web-app"] },
+      { "name": "api", "packages": ["api-gateway", "api-remotes"] },
+      { "name": "typert", "packages": ["typert-generator", "typert-loader", "typert-protocol", "typert-registry"] },
+      { "name": "extensions", "packages": ["tool-cordis", "ui-cordis", "cordis-client-runner", "cordis-host-runner"] },
+      { "name": "test-support", "packages": ["acp-snapshot", "agent-loop-testkit", "client-runtime", "llm-mock-server", "llm-replay", "loader-smoke"] },
+      { "name": "runtime-diagnostics", "packages": ["invariants"] }
+    ]
+  }
+]
