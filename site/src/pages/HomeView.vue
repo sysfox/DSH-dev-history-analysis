@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import Skyline from '../components/Skyline.vue'
 import StatCard from '../components/StatCard.vue'
 import HashChip from '../components/HashChip.vue'
+import ChartZoom from '../components/ChartZoom.vue'
 import { doc, eventsByDate, TOTAL } from '../lib/data'
 import { numFmt, hashTokens } from '../lib/util'
 
@@ -69,7 +70,9 @@ const totalCommits = TOTAL.commits
             <span class="mono title">每日提交数 · 2026-06-10 → 2026-08-13</span>
             <span class="mono note">点击任意一天查看当日事件</span>
           </div>
-          <Skyline :days="daily" :height="210" :selected="selected" @select="(d) => (selected = d)" />
+          <ChartZoom title="每日提交天际线 · 65 天" :clickable="true">
+            <Skyline :days="daily" :height="210" :selected="selected" @select="(d) => (selected = d)" />
+          </ChartZoom>
           <div class="day-panel">
             <div class="day-date mono">{{ selected }}</div>
             <div class="day-count num">{{ dayCount(selected) }} 次提交</div>

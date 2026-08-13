@@ -4,6 +4,7 @@ import PageHero from '../components/PageHero.vue'
 import BaseChart from '../components/BaseChart.vue'
 import DataTable from '../components/DataTable.vue'
 import StatCard from '../components/StatCard.vue'
+import ChartZoom from '../components/ChartZoom.vue'
 import { doc, contributorRank } from '../lib/data'
 
 const matrix = doc.contributionMatrix.filter((m) => !m.isTotal)
@@ -97,7 +98,9 @@ const agentFirst = [
           <span class="en">STACKED · 按 %an 精确匹配</span>
         </div>
         <div class="chart-box">
+        <ChartZoom title="月度提交矩阵（前 14 名）">
           <BaseChart :option="stackedOption" height="460px" />
+        </ChartZoom>
         </div>
       </section>
 
@@ -109,7 +112,9 @@ const agentFirst = [
             <span class="en">SHARE · 9,028 / 12,293</span>
           </div>
           <div class="chart-box">
+          <ChartZoom title="Top-5 提交份额">
             <BaseChart :option="shareOption" height="320px" />
+          </ChartZoom>
           </div>
         </div>
         <div>

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, inject, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 
 const props = defineProps({
@@ -7,6 +7,14 @@ const props = defineProps({
   height: { type: String, default: '360px' },
 })
 const emit = defineEmits(['click'])
+
+// 处于 ChartZoom 放大弹层内时，高度按比例放大
+const zoomBig = inject('chartZoomBig', null)
+const effectiveHeight = computed(() => {
+  if (!zoomBig || !zoomBig.value) return props.height
+  const base = parseFloat(props.height) || 320
+  return `${Math.min(Math.max(base * 1.5, 440), 640)}px`
+})
 
 const el = ref(null)
 let chart = null
@@ -38,7 +46,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="el" class="base-chart" :style="{ height }"></div>
+  <div ref="el" class="base-chart" :style="{ height: effectiveHeight }"></div>
 </template>
 
 <style scoped>

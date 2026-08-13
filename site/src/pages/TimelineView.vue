@@ -6,6 +6,7 @@ import DataTable from '../components/DataTable.vue'
 import MermaidBlock from '../components/MermaidBlock.vue'
 import HashChip from '../components/HashChip.vue'
 import PhaseBadge from '../components/PhaseBadge.vue'
+import ChartZoom from '../components/ChartZoom.vue'
 import {
   doc, weekly, monthly, phases, phaseCompare, prVelocity, topDays, keyEvents,
   eventsByDate, PHASES, PHASE_HEX,
@@ -260,7 +261,9 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
         </div>
         <div class="chart-box">
           <div class="chart-title"><span>提交数 / 日</span><span class="note">背景色块为五个阶段</span></div>
-          <BaseChart :option="dailyOption" height="340px" @click="onDailyClick" />
+          <ChartZoom title="每日提交数（65 天）" :clickable="true">
+            <BaseChart :option="dailyOption" height="340px" @click="onDailyClick" />
+          </ChartZoom>
         </div>
         <div class="day-detail card">
           <div class="dd-head">
@@ -286,7 +289,9 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
             <span class="en">WEEKLY · 10 周</span>
           </div>
           <div class="chart-box">
+          <ChartZoom title="逐周提交节奏（10 周）">
             <BaseChart :option="weeklyOption" height="300px" />
+          </ChartZoom>
           </div>
         </div>
         <div>
@@ -295,7 +300,9 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
             <span class="en">MONTHLY</span>
           </div>
           <div class="chart-box">
+          <ChartZoom title="月度提交分布">
             <BaseChart :option="monthlyOption" height="300px" />
+          </ChartZoom>
           </div>
         </div>
       </section>
@@ -308,7 +315,9 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
             <span class="en">PHASE · 合并 / 非合并</span>
           </div>
           <div class="chart-box">
+          <ChartZoom title="阶段提交构成（合并 / 非合并）">
             <BaseChart :option="mergeSplitOption" height="300px" />
+          </ChartZoom>
           </div>
         </div>
         <div>
@@ -317,7 +326,9 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
             <span class="en">PR RATE · 日均</span>
           </div>
           <div class="chart-box">
+          <ChartZoom title="PR 编号流速（日均）">
             <BaseChart :option="velocityOption" height="300px" />
+          </ChartZoom>
           </div>
         </div>
       </section>
@@ -333,7 +344,9 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
             <span>12,293 次提交，按 subject 前缀统计</span>
             <span class="note">docs + test（2,306）是 feat（693）的 3 倍以上 —— 「文档与测试随代码同行」</span>
           </div>
-          <BaseChart :option="typeOption" height="380px" />
+          <ChartZoom title="提交类型分布">
+            <BaseChart :option="typeOption" height="380px" />
+          </ChartZoom>
         </div>
       </section>
 
@@ -410,7 +423,9 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
               <span class="mono">{{ m.path.split(' / ').pop() }}</span>
               <span class="mono dim">L{{ m.line }}</span>
             </div>
-            <MermaidBlock :code="m.code" />
+            <ChartZoom :title="`mermaid · ${m.path.split(' / ').pop()}`">
+              <MermaidBlock :code="m.code" />
+            </ChartZoom>
           </div>
         </div>
       </section>

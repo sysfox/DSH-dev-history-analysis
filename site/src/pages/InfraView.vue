@@ -5,6 +5,7 @@ import BaseChart from '../components/BaseChart.vue'
 import DataTable from '../components/DataTable.vue'
 import MermaidBlock from '../components/MermaidBlock.vue'
 import HashChip from '../components/HashChip.vue'
+import ChartZoom from '../components/ChartZoom.vue'
 import { doc } from '../lib/data'
 import { hashTokens } from '../lib/util'
 
@@ -143,7 +144,9 @@ const scriptOption = computed(() => ({
         </div>
         <div class="scripts-layout">
           <div class="chart-box">
+          <ChartZoom title="根 scripts · 12 组分布">
             <BaseChart :option="scriptOption" height="320px" />
+          </ChartZoom>
           </div>
           <div class="script-groups">
             <div v-for="g in scriptGroups" :key="g.name" class="script-group card">
@@ -228,7 +231,9 @@ const scriptOption = computed(() => ({
               <span class="mono">{{ m.path.split(' / ').pop() }}</span>
               <span class="mono dim">L{{ m.line }}</span>
             </div>
-            <MermaidBlock :code="m.code" />
+            <ChartZoom :title="`mermaid · ${m.path.split(' / ').pop()}`">
+              <MermaidBlock :code="m.code" />
+            </ChartZoom>
           </div>
         </div>
       </section>

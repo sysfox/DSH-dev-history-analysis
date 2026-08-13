@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard.vue'
 import DataTable from '../components/DataTable.vue'
 import MermaidBlock from '../components/MermaidBlock.vue'
 import HashChip from '../components/HashChip.vue'
+import ChartZoom from '../components/ChartZoom.vue'
 import { doc } from '../lib/data'
 
 const t = (p) => doc.tables.find((x) => x.path.includes(p))
@@ -244,7 +245,9 @@ const keyStats = computed(() => {
               <span class="mono">{{ m.path.split(' / ').pop() }}</span>
               <span class="mono dim">L{{ m.line }}</span>
             </div>
-            <MermaidBlock :code="m.code" />
+            <ChartZoom :title="`mermaid · ${m.path.split(' / ').pop()}`">
+              <MermaidBlock :code="m.code" />
+            </ChartZoom>
           </div>
         </div>
       </section>

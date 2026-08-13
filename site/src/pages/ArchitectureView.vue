@@ -5,6 +5,7 @@ import BaseChart from '../components/BaseChart.vue'
 import DataTable from '../components/DataTable.vue'
 import MermaidBlock from '../components/MermaidBlock.vue'
 import HashChip from '../components/HashChip.vue'
+import ChartZoom from '../components/ChartZoom.vue'
 import { doc } from '../lib/data'
 import { inlineMd, hashTokens } from '../lib/util'
 
@@ -97,7 +98,9 @@ const deepDives = [
             <span class="mono">治理演进弧线（mermaid timeline）</span>
             <span class="mono dim">原文 L2042</span>
           </div>
-          <MermaidBlock :code="archMermaid.find((m) => m.line === 2042)?.code || ''" />
+          <ChartZoom title="治理演进弧线（mermaid timeline）">
+            <MermaidBlock :code="archMermaid.find((m) => m.line === 2042)?.code || ''" />
+          </ChartZoom>
         </div>
       </section>
 
@@ -113,7 +116,9 @@ const deepDives = [
               <span>按 lifecycle 小计</span>
               <span class="note">全库口径 1,372 条；本表口径 1,366（8/13 目录实测）</span>
             </div>
-            <BaseChart :option="noteOption" height="300px" />
+            <ChartZoom title="Agent Note 分布（lifecycle 小计）">
+              <BaseChart :option="noteOption" height="300px" />
+            </ChartZoom>
           </div>
         </div>
         <div>
@@ -244,7 +249,9 @@ const deepDives = [
               <span class="mono">{{ m.path.split(' / ').pop() }}</span>
               <span class="mono dim">L{{ m.line }}</span>
             </div>
-            <MermaidBlock :code="m.code" />
+            <ChartZoom :title="`mermaid · ${m.path.split(' / ').pop()}`">
+              <MermaidBlock :code="m.code" />
+            </ChartZoom>
           </div>
         </div>
       </section>

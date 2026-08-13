@@ -4,6 +4,7 @@ import PageHero from '../components/PageHero.vue'
 import BaseChart from '../components/BaseChart.vue'
 import DataTable from '../components/DataTable.vue'
 import HashChip from '../components/HashChip.vue'
+import ChartZoom from '../components/ChartZoom.vue'
 import { doc, domains, groups, groupByName, phaseHexOf } from '../lib/data'
 import { numFmt, inlineMd } from '../lib/util'
 
@@ -143,13 +144,17 @@ const top12Names = computed(() => new Set([...groups].sort((a, b) => b.commits -
 const stripEl = ref(null)
 const stripW = ref(900) // 容器实测宽度（chip 宽度估算以 px 计，换算为 %）
 let ro = null
+// 捕获内联实例的 DOM 引用：弹层内的插槽副本会覆盖 stripEl ref，
+// 因此测量回调只使用挂载时捕获的节点，保证内联布局始终按真实宽度计算
+let stripNode = null
 
 onMounted(() => {
-  if (!stripEl.value) return
-  const measure = () => (stripW.value = stripEl.value.offsetWidth || 900)
+  stripNode = stripEl.value
+  if (!stripNode) return
+  const measure = () => (stripW.value = stripNode.offsetWidth || 900)
   measure()
   ro = new ResizeObserver(measure)
-  ro.observe(stripEl.value)
+  ro.observe(stripNode)
 })
 onBeforeUnmount(() => ro && ro.disconnect())
 
@@ -236,7 +241,9 @@ const restructures = [
             <span>领域 → 包组</span>
             <span class="note">同一包组可跨领域出现；组提交数按 packages/&lt;组&gt;/ 路径统计</span>
           </div>
-          <BaseChart :option="sunOption" height="480px" />
+          <ChartZoom title="49 包组 × 12 领域（Sunburst）" :clickable="true">
+            <BaseChart :option="sunOption" height="480px" />
+          </ChartZoom>
         </div>
       </section>
 
@@ -249,52 +256,54 @@ const restructures = [
         <p class="strip-note">
           Top-12 提交大组以命名 chip 展示（连接线指向诞生日），其余 37 组为轴上刻度 —— 点击或悬停任意刻度可查看组名与详情。
         </p>
-        <div class="card">
-          <div class="birth-axis">
-            <span
-              v-for="m in birthAxis"
-              :key="m.label"
-              :style="{ left: m.left + '%', transform: m.left === 0 ? 'none' : 'translateX(-50%)' }"
-            >{{ m.label }}</span>
-          </div>
-          <div ref="stripEl" class="birth-strip" :style="{ height: STRIP_H + 'px' }">
-            <!-- Top-12 命名 chip（带连接线） -->
-            <span
-              v-for="c in chipLayout.placed"
-              :key="c.g.name"
-              class="bc"
-              :style="{ left: c.left + '%', top: c.top + 'px', '--conn': STRIP_H - c.top - 40 + 'px' }"
-            >
-              <button
-                class="birth-chip"
-                :class="{ on: selGroup === c.g.name }"
-                :title="`${c.g.name} · ${c.g.date} · ${numFmt(c.g.commits)} 提交`"
-                @click="selGroup = c.g.name"
+        <ChartZoom title="包组诞生时间表（65 天轴）" :clickable="true">
+          <div class="card">
+            <div class="birth-axis">
+              <span
+                v-for="m in birthAxis"
+                :key="m.label"
+                :style="{ left: m.left + '%', transform: m.left === 0 ? 'none' : 'translateX(-50%)' }"
+              >{{ m.label }}</span>
+            </div>
+            <div ref="stripEl" class="birth-strip" :style="{ height: STRIP_H + 'px' }">
+              <!-- Top-12 命名 chip（带连接线） -->
+              <span
+                v-for="c in chipLayout.placed"
+                :key="c.g.name"
+                class="bc"
+                :style="{ left: c.left + '%', top: c.top + 'px', '--conn': STRIP_H - c.top - 40 + 'px' }"
               >
-                <i :style="{ background: phaseHexOf(c.g.date) }"></i>{{ c.g.name }}
-              </button>
-            </span>
-            <!-- 其余 37 组 → 轴上刻度 -->
-            <button
-              v-for="t in tickLayout"
-              :key="t.g.name"
-              class="birth-tick"
-              :class="{ on: selGroup === t.g.name }"
-              :data-name="t.g.name"
-              :style="{ left: t.left + '%', background: phaseHexOf(t.g.date) }"
-              :title="`${t.g.name} · ${t.g.date} · ${numFmt(t.g.commits)} 提交`"
-              @click="selGroup = t.g.name"
-            ></button>
+                <button
+                  class="birth-chip"
+                  :class="{ on: selGroup === c.g.name }"
+                  :title="`${c.g.name} · ${c.g.date} · ${numFmt(c.g.commits)} 提交`"
+                  @click="selGroup = c.g.name"
+                >
+                  <i :style="{ background: phaseHexOf(c.g.date) }"></i>{{ c.g.name }}
+                </button>
+              </span>
+              <!-- 其余 37 组 → 轴上刻度 -->
+              <button
+                v-for="t in tickLayout"
+                :key="t.g.name"
+                class="birth-tick"
+                :class="{ on: selGroup === t.g.name }"
+                :data-name="t.g.name"
+                :style="{ left: t.left + '%', background: phaseHexOf(t.g.date) }"
+                :title="`${t.g.name} · ${t.g.date} · ${numFmt(t.g.commits)} 提交`"
+                @click="selGroup = t.g.name"
+              ></button>
+            </div>
+            <div class="birth-detail" v-if="selGroupInfo">
+              <span class="mono date">{{ selGroupInfo.date }}</span>
+              <span class="bd-name mono">{{ selGroupInfo.name }}</span>
+              <span class="bd-num num">{{ numFmt(selGroupInfo.commits) }} 提交</span>
+              <span class="bd-pkgs num">{{ selGroupInfo.pkgCount }} 子包</span>
+              <HashChip :hash="selGroupInfo.hash" />
+              <p class="bd-role">{{ selGroupInfo.role }}<template v-if="selGroupInfo.evo"> · {{ selGroupInfo.evo }}</template></p>
+            </div>
           </div>
-          <div class="birth-detail" v-if="selGroupInfo">
-            <span class="mono date">{{ selGroupInfo.date }}</span>
-            <span class="bd-name mono">{{ selGroupInfo.name }}</span>
-            <span class="bd-num num">{{ numFmt(selGroupInfo.commits) }} 提交</span>
-            <span class="bd-pkgs num">{{ selGroupInfo.pkgCount }} 子包</span>
-            <HashChip :hash="selGroupInfo.hash" />
-            <p class="bd-role">{{ selGroupInfo.role }}<template v-if="selGroupInfo.evo"> · {{ selGroupInfo.evo }}</template></p>
-          </div>
-        </div>
+        </ChartZoom>
       </section>
 
       <!-- Top-15 -->
@@ -305,7 +314,9 @@ const restructures = [
             <span class="en">BY COMMITS · 颜色 = 诞生阶段</span>
           </div>
           <div class="chart-box">
+          <ChartZoom title="提交数 Top-15 包组">
             <BaseChart :option="top15Option" height="560px" />
+          </ChartZoom>
           </div>
         </div>
         <div>
