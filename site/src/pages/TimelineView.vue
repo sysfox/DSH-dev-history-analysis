@@ -588,6 +588,15 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
     grid-template-columns: repeat(2, 1fr);
   }
 }
+@media (max-width: 620px) {
+  .kv-row {
+    grid-template-columns: 72px 12px 1fr;
+  }
+  .kv-src {
+    grid-column: 3;
+    justify-content: flex-start;
+  }
+}
 @media (max-width: 560px) {
   .topday-grid {
     grid-template-columns: 1fr;

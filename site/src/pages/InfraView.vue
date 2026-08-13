@@ -336,4 +336,14 @@ const scriptOption = computed(() => ({
     grid-template-columns: 1fr;
   }
 }
+@media (max-width: 620px) {
+  .ml-row {
+    grid-template-columns: 78px 1fr;
+  }
+  .ml-src {
+    grid-column: 2;
+    justify-content: flex-start;
+    max-width: none;
+  }
+}
 </style>

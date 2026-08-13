@@ -213,7 +213,7 @@ async function renderDoc() {
   el.querySelectorAll('a[href^="#"]').forEach((a) => {
     const target = a.getAttribute('href').slice(1)
     if (document.getElementById(target)) return
-    const norm = (s) => s.toLowerCase().replace(/[·（）()、，。：:*/"'“”’‘<>#]+/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
+    const norm = (s) => s.toLowerCase().replace(/[·（）()、，。：:*/."'“”’‘<>#%]+/g, '').replace(/\s+/g, '-').replace(/-+/g, '-')
     const wanted = norm(target)
     const hit = headings.find((h) => norm(h.text) === wanted)
     if (hit) a.setAttribute('href', `#${slugMap.get(hit.line)}`)

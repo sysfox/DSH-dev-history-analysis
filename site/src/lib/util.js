@@ -11,7 +11,7 @@ export const inlineMd = (s) =>
 export const ghSlug = (s) =>
   String(s)
     .toLowerCase()
-    .replace(/[·（）()、，。：:*/"'“”’‘<>#]+/g, '')
+    .replace(/[·（）()、，。：:*/."'“”’‘<>#%]+/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
 

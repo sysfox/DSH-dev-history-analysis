@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import PageHero from '../components/PageHero.vue'
 import BaseChart from '../components/BaseChart.vue'
 import DataTable from '../components/DataTable.vue'
@@ -119,34 +119,82 @@ const top15Option = computed(() => ({
 }))
 
 // ---------- 包组诞生时间线（DOM 条带） ----------
+// 设计：65 天轴上容纳 49 个带标签 chip 在物理上必然重叠（chip 宽 5–8%，日期间距仅 ~1.5%），
+// 因此改为「Top-12 大组 → 命名 chip（带连接线），其余 37 组 → 轴上刻度（悬停/选中显示名称）」。
 const birthStart = new Date('2026-06-10').getTime()
 const birthEnd = new Date('2026-08-13').getTime()
 const birthSpan = birthEnd - birthStart
 const birthPos = (date) => Math.min(100, Math.max(0, ((new Date(date).getTime() - birthStart) / birthSpan) * 100))
-const birthGroups = computed(() => [...groups].sort((a, b) => (a.date < b.date ? -1 : 1)))
 const selGroup = ref(groups[0]?.name ?? '')
 const selGroupInfo = computed(() => groupByName[selGroup.value])
 
-// 按行自动换行：避免 49 个 chip 相互覆盖（同日期簇自动分行）
-const ROW_H = 30
-const birthLayout = computed(() => {
+// 里程碑轴：标签按真实日期定位（与下方时间轴对齐）
+const birthAxis = [
+  { label: '06-10 建仓', date: '2026-06-10' },
+  { label: '06-20 core', date: '2026-06-20' },
+  { label: '07-01 hooks', date: '2026-07-01' },
+  { label: '07-19 GUI 两半', date: '2026-07-19' },
+  { label: '07-30 重组三连', date: '2026-07-30' },
+  { label: '08-13 命名契约', date: '2026-08-13' },
+].map((m) => ({ ...m, left: birthPos(m.date) }))
+
+const top12Names = computed(() => new Set([...groups].sort((a, b) => b.commits - a.commits).slice(0, 12).map((g) => g.name)))
+
+const stripEl = ref(null)
+const stripW = ref(900) // 容器实测宽度（chip 宽度估算以 px 计，换算为 %）
+let ro = null
+
+onMounted(() => {
+  if (!stripEl.value) return
+  const measure = () => (stripW.value = stripEl.value.offsetWidth || 900)
+  measure()
+  ro = new ResizeObserver(measure)
+  ro.observe(stripEl.value)
+})
+onBeforeUnmount(() => ro && ro.disconnect())
+
+// Top-12 命名 chip：按日期排序 + 贪心分行（同行互不重叠），两端夹取防溢出
+const CHIP_ROW_H = 32
+const CHIP_TOP = 6
+const chipW = (name) => 20 + name.length * 6.4 // px 估算
+const chipLayout = computed(() => {
   const placed = []
   let row = 0
-  let prevRightEdge = -Infinity
-  for (const g of birthGroups.value) {
-    const w = 32 + g.name.length * 6.8 // 按名称长度估算 chip 宽度
-    const raw = birthPos(g.date)
-    const left = Math.min(Math.max(raw, w / 2), 100 - w / 2) // 两端夹取，防止溢出
+  let prevRight = -Infinity
+  const sorted = groups.filter((g) => top12Names.value.has(g.name)).sort((a, b) => (a.date < b.date ? -1 : 1))
+  for (const g of sorted) {
+    const w = (chipW(g.name) / stripW.value) * 100
+    const left = Math.min(Math.max(birthPos(g.date), w / 2), 100 - w / 2)
     const leftEdge = left - w / 2
-    if (prevRightEdge > -Infinity && leftEdge < prevRightEdge) {
+    if (prevRight > -Infinity && leftEdge < prevRight) {
       row++
-      prevRightEdge = -Infinity
+      prevRight = -Infinity
     }
-    placed.push({ g, left, top: row * ROW_H })
-    prevRightEdge = left + w / 2
+    placed.push({ g, left, top: CHIP_TOP + row * CHIP_ROW_H })
+    prevRight = left + w / 2
   }
-  return { placed, height: (row + 1) * ROW_H }
+  return { placed, rows: row + 1 }
 })
+
+// 其余组 → 轴上的刻度；同日刻度横向错开 5px
+const tickLayout = computed(() => {
+  const byDate = new Map()
+  for (const g of groups) {
+    if (top12Names.value.has(g.name)) continue
+    if (!byDate.has(g.date)) byDate.set(g.date, [])
+    byDate.get(g.date).push(g)
+  }
+  const ticks = []
+  for (const [date, list] of byDate) {
+    const wPct = ((list.length - 1) * 5 / stripW.value) * 100
+    const base = Math.min(Math.max(birthPos(date) - wPct / 2, 0), 100 - wPct)
+    list.forEach((g, i) => ticks.push({ g, left: base + ((i * 5) / stripW.value) * 100 }))
+  }
+  return ticks
+})
+const selTick = computed(() => tickLayout.value.find((t) => t.g.name === selGroup.value))
+
+const STRIP_H = computed(() => chipLayout.value.rows * CHIP_ROW_H + CHIP_TOP + 92)
 
 // ---------- 领域详情 ----------
 const openDomain = ref(1)
@@ -198,22 +246,45 @@ const restructures = [
           <h2>包组诞生时间表</h2>
           <span class="en">BIRTH ORDER · git 实测首提交</span>
         </div>
+        <p class="strip-note">
+          Top-12 提交大组以命名 chip 展示（连接线指向诞生日），其余 37 组为轴上刻度 —— 点击或悬停任意刻度可查看组名与详情。
+        </p>
         <div class="card">
           <div class="birth-axis">
-            <span>06-10 建仓</span><span>06-20 core</span><span>07-01 hooks</span><span>07-19 GUI 两半</span><span>07-30 重组三连</span><span>08-13 命名契约</span>
+            <span
+              v-for="m in birthAxis"
+              :key="m.label"
+              :style="{ left: m.left + '%', transform: m.left === 0 ? 'none' : 'translateX(-50%)' }"
+            >{{ m.label }}</span>
           </div>
-          <div class="birth-strip" :style="{ height: Math.max(280, birthLayout.height) + 'px', '--rowh': ROW_H + 'px' }">
-            <button
-              v-for="c in birthLayout.placed"
+          <div ref="stripEl" class="birth-strip" :style="{ height: STRIP_H + 'px' }">
+            <!-- Top-12 命名 chip（带连接线） -->
+            <span
+              v-for="c in chipLayout.placed"
               :key="c.g.name"
-              class="birth-chip"
-              :class="{ on: selGroup === c.g.name }"
-              :style="{ left: c.left + '%', top: c.top + 'px' }"
-              :title="`${c.g.name} · ${c.g.date} · ${numFmt(c.g.commits)} 提交`"
-              @click="selGroup = c.g.name"
+              class="bc"
+              :style="{ left: c.left + '%', top: c.top + 'px', '--conn': STRIP_H - c.top - 40 + 'px' }"
             >
-              <i :style="{ background: phaseHexOf(c.g.date) }"></i>{{ c.g.name }}
-            </button>
+              <button
+                class="birth-chip"
+                :class="{ on: selGroup === c.g.name }"
+                :title="`${c.g.name} · ${c.g.date} · ${numFmt(c.g.commits)} 提交`"
+                @click="selGroup = c.g.name"
+              >
+                <i :style="{ background: phaseHexOf(c.g.date) }"></i>{{ c.g.name }}
+              </button>
+            </span>
+            <!-- 其余 37 组 → 轴上刻度 -->
+            <button
+              v-for="t in tickLayout"
+              :key="t.g.name"
+              class="birth-tick"
+              :class="{ on: selGroup === t.g.name }"
+              :data-name="t.g.name"
+              :style="{ left: t.left + '%', background: phaseHexOf(t.g.date) }"
+              :title="`${t.g.name} · ${t.g.date} · ${numFmt(t.g.commits)} 提交`"
+              @click="selGroup = t.g.name"
+            ></button>
           </div>
           <div class="birth-detail" v-if="selGroupInfo">
             <span class="mono date">{{ selGroupInfo.date }}</span>
@@ -353,30 +424,47 @@ const restructures = [
   grid-template-columns: 1fr 1fr;
   gap: 0 22px;
 }
+.strip-note {
+  font-size: 12.5px;
+  color: var(--ink-3);
+  margin: -4px 0 12px;
+  line-height: 1.7;
+}
 .birth-axis {
-  display: flex;
-  justify-content: space-between;
+  position: relative;
+  height: 22px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.birth-axis span {
+  position: absolute;
+  top: 6px;
   font-family: var(--font-m);
   font-size: 10.5px;
   color: var(--ink-4);
-  border-bottom: 1px solid var(--line-soft);
-  padding-bottom: 6px;
+  white-space: nowrap;
 }
 .birth-strip {
   position: relative;
   margin-top: 10px;
-  border-bottom: 1px solid var(--line-soft);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(var(--rowh, 30px) - 1px),
-    rgba(35, 50, 90, 0.14) calc(var(--rowh, 30px) - 1px),
-    rgba(35, 50, 90, 0.14) var(--rowh, 30px)
-  );
+  border-bottom: 1px solid var(--line);
+  min-height: 120px;
 }
-.birth-chip {
+.bc {
   position: absolute;
   transform: translateX(-50%);
+  z-index: 1;
+}
+.bc::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: var(--conn);
+  background: linear-gradient(180deg, rgba(77, 107, 254, 0.4), rgba(77, 107, 254, 0.08));
+  pointer-events: none;
+}
+.birth-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -390,18 +478,57 @@ const restructures = [
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
+  position: relative;
+  z-index: 2;
 }
 .birth-chip:hover,
 .birth-chip.on {
   border-color: var(--blue);
   color: var(--ink);
   background: rgba(77, 107, 254, 0.16);
-  z-index: 2;
 }
 .birth-chip i {
   width: 6px;
   height: 6px;
   border-radius: 50%;
+}
+.birth-tick {
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  height: 14px;
+  transform: translateX(-50%);
+  border: none;
+  border-radius: 2px 2px 0 0;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+.birth-tick:hover {
+  opacity: 1;
+  height: 22px;
+}
+.birth-tick.on {
+  opacity: 1;
+  height: 26px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+.birth-tick.on::after {
+  content: attr(data-name);
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-m);
+  font-size: 10.5px;
+  color: var(--ink);
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  padding: 1px 8px;
+  border-radius: 6px;
+  pointer-events: none;
 }
 .birth-detail {
   display: flex;
