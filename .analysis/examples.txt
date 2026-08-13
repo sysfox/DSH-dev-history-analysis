@@ -1,6 +1,0 @@
-acp-agent
-headless-agent
-jsonrpc-agent
-mcp-memory
-web-cordis
-web-schedule
