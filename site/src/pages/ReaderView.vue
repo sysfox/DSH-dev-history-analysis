@@ -11,6 +11,7 @@ import rawMd from '../../../DEVELOPMENT-HISTORY.md?raw'
 
 const route = useRoute()
 const tocOpen = ref(true)
+const mobilePanel = ref('')
 
 // ---- markdown-it 实例 ----
 const md = new MarkdownIt({
@@ -156,6 +157,7 @@ function sectionForId(id) {
 }
 
 async function jumpToLine(line) {
+  mobilePanel.value = ''
   const h = headingForLine(line)
   const id = h ? slugMap.get(h.line) : null
   await renderSection(sectionForLine(h?.line || line))
@@ -171,6 +173,10 @@ function clearSearch() {
   query.value = ''
 }
 
+function toggleMobilePanel(panel) {
+  mobilePanel.value = mobilePanel.value === panel ? '' : panel
+}
+
 function flash(el) {
   el.classList.add('flash')
   setTimeout(() => el.classList.remove('flash'), 1600)
@@ -178,6 +184,7 @@ function flash(el) {
 
 async function jumpToHash(hash) {
   if (!hash) return
+  mobilePanel.value = ''
   await renderSection(sectionForId(hash.slice(1)))
   await nextTick()
   const el = document.getElementById(hash.slice(1))
@@ -394,6 +401,79 @@ function toTop() {
     </div>
 
     <div class="reader-body container">
+      <!-- 移动端工具栏：脱离桌面侧栏，始终贴在站点导航下方 -->
+      <div class="reader-mobile-nav">
+        <div class="mobile-nav-actions">
+          <button
+            class="mobile-nav-button"
+            type="button"
+            :aria-expanded="mobilePanel === 'search'"
+            aria-controls="mobile-reader-search"
+            @click="toggleMobilePanel('search')"
+          >
+            <span aria-hidden="true">⌕</span>搜索
+          </button>
+          <button
+            class="mobile-nav-button"
+            type="button"
+            :aria-expanded="mobilePanel === 'toc'"
+            aria-controls="mobile-reader-toc"
+            @click="toggleMobilePanel('toc')"
+          >
+            <span aria-hidden="true">☷</span>目录 · {{ toc.length }} 章
+          </button>
+        </div>
+        <div v-if="mobilePanel === 'search'" id="mobile-reader-search" class="mobile-nav-panel">
+          <div class="search-wrap">
+            <input
+              v-model="query"
+              type="search"
+              class="search-box"
+              name="mobile-reader-search"
+              autocomplete="off"
+              placeholder="搜索全文…"
+              aria-label="搜索全文"
+              aria-controls="mobile-search-results"
+              @keydown.escape="mobilePanel = ''"
+            />
+            <button v-if="query" type="button" class="search-clear" aria-label="清除搜索" @click="clearSearch">×</button>
+          </div>
+          <div v-if="searchResults.length" id="mobile-search-results" class="search-results">
+            <div class="search-count">{{ searchResults.length }} 个匹配，点击跳到所属章节</div>
+            <button v-for="r in searchResults" :key="r.line" class="search-hit" @click="jumpToLine(r.line)">
+              <span class="mono hit-line">L{{ r.line }}</span>
+              <span class="hit-text">{{ r.text }}</span>
+            </button>
+            <div v-if="searchResults.length >= 150" class="search-more">仅显示前 150 条，请细化关键词</div>
+          </div>
+          <div v-else-if="query" class="search-empty">无匹配行</div>
+        </div>
+        <div v-if="mobilePanel === 'toc'" id="mobile-reader-toc" class="mobile-nav-panel mobile-toc-panel">
+          <div class="toc-scroll">
+            <template v-for="h2 in toc" :key="h2.id">
+              <a :href="`#${h2.id}`" class="toc-h2" :class="{ on: activeId === h2.id }" @click.prevent="jumpToHash(`#${h2.id}`)">
+                {{ h2.text }}
+              </a>
+              <template v-for="h3 in h2.children" :key="h3.id">
+                <a :href="`#${h3.id}`" class="toc-h3" :class="{ on: activeId === h3.id }" @click.prevent="jumpToHash(`#${h3.id}`)">
+                  {{ h3.text }}
+                </a>
+                <a
+                  v-for="h4 in h3.children"
+                  :key="h4.id"
+                  :href="`#${h4.id}`"
+                  class="toc-h4"
+                  :class="{ on: activeId === h4.id }"
+                  @click.prevent="jumpToHash(`#${h4.id}`)"
+                >
+                  {{ h4.text }}
+                </a>
+              </template>
+            </template>
+          </div>
+        </div>
+      </div>
+
       <!-- 侧栏：搜索 + TOC -->
       <aside class="reader-side">
         <div class="side-card">
@@ -510,6 +590,9 @@ function toTop() {
   gap: 26px;
   margin-top: 26px;
   align-items: start;
+}
+.reader-mobile-nav {
+  display: none;
 }
 .reader-side {
   min-width: 0;
@@ -904,12 +987,72 @@ function toTop() {
     width: 100%;
     max-width: 100%;
   }
+  .reader-mobile-nav {
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 40;
+    display: block;
+    margin: 0 -14px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line);
+    background: rgba(10, 15, 30, 0.96);
+    backdrop-filter: blur(12px);
+  }
+  .mobile-nav-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .mobile-nav-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 0;
+    min-height: 40px;
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--ink-2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .mobile-nav-button:hover,
+  .mobile-nav-button[aria-expanded='true'] {
+    border-color: var(--blue);
+    background: rgba(77, 107, 254, 0.14);
+    color: var(--ink);
+  }
+  .mobile-nav-button > span {
+    color: var(--cyan);
+    font-size: 17px;
+    line-height: 1;
+  }
+  .mobile-nav-panel {
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--surface);
+    box-shadow: 0 12px 28px rgba(2, 6, 18, 0.35);
+  }
+  .mobile-toc-panel {
+    max-height: min(52vh, 420px);
+    overflow: auto;
+  }
+  .mobile-toc-panel .toc-scroll {
+    max-height: none;
+  }
   .reader-side,
   .reader-main {
     width: 100%;
     max-width: 100%;
   }
   .reader-side {
+    display: none;
     position: static;
     max-height: none;
   }
