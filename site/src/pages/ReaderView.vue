@@ -71,10 +71,36 @@ for (const h of headings) {
   slugMap.set(h.line, id)
 }
 
+const rawLines = rawMd.split('\n')
+const readerSections = ref([])
+
+function createReaderSections() {
+  const starts = [0]
+  rawLines.forEach((line, index) => {
+    if (index > 0 && /^##\s+/.test(line)) starts.push(index)
+  })
+  return starts.map((start, index) => {
+    const end = starts[index + 1] ?? rawLines.length
+    return {
+      id: slugMap.get(start + 1) || `reader-section-${index}`,
+      source: rawLines.slice(start, end).join('\n'),
+      startLine: start + 1,
+      endLine: end,
+      estimatedHeight: Math.max(180, Math.min(24000, (end - start) * 22)),
+      html: '',
+      loading: false,
+      loaded: false,
+      el: null,
+    }
+  })
+}
+
+readerSections.value = createReaderSections()
+
 const defaultHeadingOpen = md.renderer.rules.heading_open
 md.renderer.rules.heading_open = (tokens, idx, options, env, self) => {
   const tok = tokens[idx]
-  const line = tok.map ? tok.map[0] + 1 : 0
+  const line = (tok.map ? tok.map[0] + 1 : 0) + (env?.lineOffset || 0)
   const id = slugMap.get(line) || `h-${line}`
   return `<h${tok.tag.slice(1)} id="${id}" data-line="${line}"><a class="h-anchor" href="#${id}" aria-label="链接到本节">#</a>`
 }
