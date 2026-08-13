@@ -64,6 +64,10 @@ const totalCommits = TOTAL.commits
           DeepSeek Harness 从空仓库到 npm 公开的完整弧线。本网站将 5,567 行的开发历程分析
           —— git 实测的提交密度、包结构、架构决策、工程基建与团队演化 —— 变成可交互的图表与时间线。
         </p>
+        <div class="hero-credit">
+          <span class="hero-credit-dot" aria-hidden="true"></span>
+          <span>研究与开发：<strong>DSH + DeepSeek V4 Flash</strong></span>
+        </div>
 
         <div class="hero-sky card">
           <div class="hero-sky-head">
@@ -180,6 +184,32 @@ const totalCommits = TOTAL.commits
   color: var(--ink-2);
   font-size: 15.5px;
   line-height: 1.9;
+}
+.hero-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 6px 10px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 7px;
+  color: var(--ink-3);
+  background: rgba(56, 189, 248, 0.06);
+  font-family: var(--font-m);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.hero-credit strong {
+  color: var(--cyan);
+  font-weight: 600;
+}
+.hero-credit-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
 }
 .hero-sky {
   margin-top: 30px;
