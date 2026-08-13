@@ -251,11 +251,15 @@ li {
 
 /* ---------- 表格 ---------- */
 .table-scroll {
+  width: 100%;
+  min-width: 0;
   overflow: auto;
   border: 1px solid var(--line-soft);
   border-radius: var(--r);
   background: var(--surface);
   max-width: 100%;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
 }
 table.data {
   width: 100%;
@@ -407,6 +411,15 @@ table.data .tfoot td {
   text-transform: none;
   letter-spacing: 0;
   font-size: 11px;
+}
+
+/* 宽表格只能扩大自己的滚动区域，不能撑开页面或 grid 轨道。 */
+.grid-2 > *,
+.scripts-layout > *,
+.chapter-grid > *,
+.mech-grid > *,
+.stat-grid > * {
+  min-width: 0;
 }
 
 /* ---------- 按钮 ---------- */

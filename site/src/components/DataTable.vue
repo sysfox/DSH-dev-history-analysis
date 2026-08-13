@@ -83,10 +83,15 @@ function clickHead(i) {
 <style scoped>
 .dt-wrap {
   margin: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--line-soft);
   border-radius: var(--r);
   background: var(--surface);
   overflow: auto;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
 }
 .dt-caption {
   font-family: var(--font-m);

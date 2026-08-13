@@ -788,11 +788,16 @@ function toTop() {
   background: rgba(56, 189, 248, 0.07);
 }
 .reader-main {
+  width: 100%;
   min-width: 0;
   max-width: 100%;
   overflow-wrap: anywhere;
+  overflow-x: hidden;
 }
 .md-section {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: var(--section-min-height);
   content-visibility: auto;
   contain-intrinsic-size: auto var(--section-min-height);
@@ -821,6 +826,9 @@ function toTop() {
 <style>
 /* 正文 markdown 排版（非 scoped：作用于 v-html 内容） */
 .md-body {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   color: var(--ink-2);
   font-size: 14.5px;
   line-height: 1.85;
@@ -913,10 +921,14 @@ function toTop() {
 .md-body table {
   border-collapse: collapse;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin: 14px 0;
   font-size: 12.5px;
   display: block;
   overflow-x: auto;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
 }
 .md-body table th {
   background: var(--surface-2);
