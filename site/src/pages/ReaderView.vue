@@ -900,11 +900,21 @@ function toTop() {
 }
 @media (max-width: 980px) {
   .reader-body {
-    grid-template-columns: minmax(0, 1fr);
+    display: block !important;
+    width: 100%;
+    max-width: 100%;
+  }
+  .reader-side,
+  .reader-main {
+    width: 100%;
+    max-width: 100%;
   }
   .reader-side {
     position: static;
     max-height: none;
+  }
+  .reader-main {
+    margin-top: 18px;
   }
   .toc-scroll {
     max-height: 320px;
