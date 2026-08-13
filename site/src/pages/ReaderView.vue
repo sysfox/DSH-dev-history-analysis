@@ -84,7 +84,7 @@ md.renderer.rules.fence = (tokens, idx) => {
   const t = tokens[idx]
   const lang = (t.info || '').trim()
   if (lang === 'mermaid') {
-    return `<div class="mermaid-host">${escapeHtml(t.content)}</div>`
+    return `<div class="mermaid-host" data-mermaid="true">${escapeHtml(t.content)}</div>`
   }
   const code = md.options.highlight(t.content, lang)
   return `<div class="code-block"><span class="code-lang">${escapeHtml(lang || 'text')}</span><pre><code class="hljs">${code}</code></pre></div>`
@@ -167,6 +167,7 @@ const toc = computed(() => {
 
 const activeId = ref('')
 let observer = null
+let mermaidObserver = null
 
 function setupSpy() {
   observer = new IntersectionObserver(
@@ -202,15 +203,39 @@ async function renderDoc() {
   const el = contentRef.value
   if (!el) return
 
-  // mermaid 渲染
-  const hosts = el.querySelectorAll('.mermaid-host')
-  for (const host of hosts) {
+  // Mermaid 图按可视区域懒渲染，避免原文页首屏一次启动全部图表。
+  const hosts = [...el.querySelectorAll('.mermaid-host[data-mermaid]')]
+  const renderHost = async (host) => {
+    if (host.dataset.rendered) return
+    host.dataset.rendered = 'loading'
+    const code = host.textContent || ''
+    host.textContent = ''
+    host.classList.add('is-pending')
     try {
-      const svg = await renderMermaidSvg(host.textContent || '')
-      host.innerHTML = svg
+      host.innerHTML = await renderMermaidSvg(code)
+      host.classList.remove('is-pending')
+      host.dataset.rendered = 'true'
     } catch (e) {
+      host.classList.remove('is-pending')
       host.innerHTML = `<pre class="mermaid-error">mermaid 渲染失败：${escapeHtml(String(e.message || e))}</pre>`
+      host.dataset.rendered = 'error'
     }
+  }
+
+  if ('IntersectionObserver' in window) {
+    mermaidObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          mermaidObserver.unobserve(entry.target)
+          renderHost(entry.target)
+        }
+      },
+      { rootMargin: '360px 0px' }
+    )
+    hosts.forEach((host) => mermaidObserver.observe(host))
+  } else {
+    await Promise.all(hosts.map(renderHost))
   }
 
   // 内部锚点解析：找不到 id 时按 slug 模糊匹配最近的标题
@@ -238,7 +263,10 @@ watch(
   }
 )
 
-onBeforeUnmount(() => observer && observer.disconnect())
+onBeforeUnmount(() => {
+  observer && observer.disconnect()
+  mermaidObserver && mermaidObserver.disconnect()
+})
 
 // 回到顶部
 function toTop() {
@@ -272,6 +300,8 @@ function toTop() {
                v-model="query"
                type="search"
                class="search-box"
+               name="reader-search"
+               autocomplete="off"
                placeholder="搜索全文…"
                aria-label="搜索全文"
                aria-controls="search-results"
@@ -659,6 +689,17 @@ function toTop() {
 }
 .md-body .mermaid-host {
   margin: 18px 0;
+}
+.md-body .mermaid-host.is-pending {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-4);
+  font-family: var(--font-m);
+  font-size: 11px;
+}
+.md-body .mermaid-host.is-pending::before {
+  content: '图表加载中…';
 }
 .md-body .flash {
   animation: reader-flash 1.6s ease;

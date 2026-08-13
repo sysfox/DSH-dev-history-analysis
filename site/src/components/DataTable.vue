@@ -45,6 +45,7 @@ function clickHead(i) {
 <template>
   <figure class="dt-wrap" :style="maxHeight ? { maxHeight, overflow: 'auto' } : {}">
     <figcaption v-if="caption" class="dt-caption">{{ caption }}</figcaption>
+    <div class="dt-scroll-hint" aria-hidden="true">左右滑动查看完整表格</div>
     <table class="data dt">
       <thead>
         <tr>
@@ -95,7 +96,18 @@ function clickHead(i) {
   padding: 9px 14px 0;
   text-transform: uppercase;
 }
+.dt-scroll-hint {
+  display: none;
+  padding: 7px 14px 0;
+  color: var(--ink-4);
+  font-size: 10.5px;
+}
 table.data.dt {
   min-width: 560px;
+}
+@media (max-width: 720px) {
+  .dt-scroll-hint {
+    display: block;
+  }
 }
 </style>

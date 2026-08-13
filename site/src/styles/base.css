@@ -56,6 +56,7 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
@@ -75,6 +76,11 @@ input {
 
 button {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+a {
+  touch-action: manipulation;
 }
 
 /* 氛围光：夜空的极淡蓝辉 */
@@ -507,6 +513,9 @@ table.data .tfoot td {
 
 /* ---------- 动效 ---------- */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *,
   *::before,
   *::after {

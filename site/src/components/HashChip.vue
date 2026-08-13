@@ -7,13 +7,13 @@ const props = defineProps({
   copyable: { type: Boolean, default: true },
 })
 
-const copied = ref(false)
+const copyState = ref('')
 const clean = computed(() => String(props.hash).replace(/`/g, '').trim())
 
 async function onClick() {
   if (!props.copyable) return
-  copied.value = await copyText(clean.value)
-  setTimeout(() => (copied.value = false), 1200)
+  copyState.value = (await copyText(clean.value)) ? 'success' : 'error'
+  setTimeout(() => (copyState.value = ''), 1600)
 }
 </script>
 
@@ -30,7 +30,9 @@ async function onClick() {
     @keydown.space.prevent="onClick"
   >
     {{ clean }}
-    <span v-if="copied" class="copied">✓ 已复制</span>
+    <span v-if="copyState" class="copied" aria-live="polite">
+      {{ copyState === 'success' ? '✓ 已复制' : '复制失败' }}
+    </span>
   </code>
 </template>
 

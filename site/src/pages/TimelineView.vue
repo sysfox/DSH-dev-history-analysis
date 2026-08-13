@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PageHero from '../components/PageHero.vue'
 import BaseChart from '../components/BaseChart.vue'
 import DataTable from '../components/DataTable.vue'
@@ -15,8 +16,34 @@ import { escapeHtml, hashTokens } from '../lib/util'
 
 const daily = doc.daily
 const mermaid = doc.mermaid
-const selected = ref('2026-07-30')
-const phaseFilter = ref(0) // 0 = 全部
+const route = useRoute()
+const router = useRouter()
+const defaultDate = '2026-07-30'
+const validDates = new Set(daily.map((d) => d.date))
+const queryValue = (value) => (Array.isArray(value) ? value[0] : value)
+const dateFromQuery = (value) => (validDates.has(queryValue(value)) ? queryValue(value) : defaultDate)
+const phaseFromQuery = (value) => {
+  const phase = Number.parseInt(queryValue(value), 10)
+  return phase >= 1 && phase <= PHASES.length ? phase : 0
+}
+const selected = ref(dateFromQuery(route.query.date))
+const phaseFilter = ref(phaseFromQuery(route.query.phase)) // 0 = 全部
+
+watch(
+  () => [route.query.date, route.query.phase],
+  ([date, phase]) => {
+    selected.value = dateFromQuery(date)
+    phaseFilter.value = phaseFromQuery(phase)
+  }
+)
+watch([selected, phaseFilter], () => {
+  const query = { ...route.query }
+  if (selected.value === defaultDate) delete query.date
+  else query.date = selected.value
+  if (phaseFilter.value === 0) delete query.phase
+  else query.phase = String(phaseFilter.value)
+  router.replace({ query })
+})
 
 // ---------- 图表公共样式 ----------
 const axisBase = {
@@ -151,8 +178,12 @@ const typeOption = computed(() => ({
       type: 'pie',
       radius: '64%',
       center: ['50%', '44%'],
-      label: { color: '#b8c1da', fontSize: 11, formatter: '{b} {d}%' },
-      labelLine: { lineStyle: { color: '#23325a' } },
+       label: { show: false },
+       labelLine: { lineStyle: { color: '#23325a' } },
+       emphasis: {
+         scale: true,
+         label: { show: true, color: '#e9edf9', fontSize: 11, formatter: '{b}\n{d}%' },
+       },
       data: [
         { name: 'merge', value: 5609 },
         { name: 'fix', value: 2252 },

@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const mobileOpen = ref(false)
+const navRoot = ref(null)
 const links = [
   { to: '/', label: '概览', en: 'OVERVIEW' },
   { to: '/timeline', label: '时间线', en: 'TIMELINE' },
@@ -18,10 +19,27 @@ const links = [
 watch(() => route.path, () => {
   mobileOpen.value = false
 })
+
+function onGlobalKeydown(e) {
+  if (e.key === 'Escape') mobileOpen.value = false
+}
+
+function onDocumentClick(e) {
+  if (mobileOpen.value && navRoot.value && !navRoot.value.contains(e.target)) mobileOpen.value = false
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onGlobalKeydown)
+  document.addEventListener('click', onDocumentClick)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onGlobalKeydown)
+  document.removeEventListener('click', onDocumentClick)
+})
 </script>
 
 <template>
-  <header class="topnav">
+  <header ref="navRoot" class="topnav">
     <div class="container topnav-inner">
       <router-link to="/" class="brand" aria-label="回到概览">
         <span class="brand-sky" aria-hidden="true">

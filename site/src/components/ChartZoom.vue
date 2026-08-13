@@ -15,7 +15,11 @@ const open = ref(false)
 provide('chartZoomBig', open)
 
 const closeBtn = ref(null)
+const panel = ref(null)
 let previousFocus = null
+let previousOverflow = ''
+let appRoot = null
+let previousInert = false
 
 function openModal() {
   previousFocus = document.activeElement
@@ -26,6 +30,23 @@ function close() {
   open.value = false
   nextTick(() => previousFocus?.focus?.())
 }
+
+function onPanelKeydown(e) {
+  if (e.key !== 'Tab' || !panel.value) return
+  const focusable = [...panel.value.querySelectorAll(
+    'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )]
+  if (!focusable.length) return
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
 function onWrapClick() {
   if (!props.clickable) openModal()
 }
@@ -34,13 +55,25 @@ function onKey(e) {
 }
 
 watch(open, (v) => {
-  document.body.style.overflow = v ? 'hidden' : ''
-  if (v) window.addEventListener('keydown', onKey)
-  else window.removeEventListener('keydown', onKey)
+  if (v) {
+    previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    appRoot = document.getElementById('app')
+    if (appRoot) {
+      previousInert = appRoot.inert
+      appRoot.inert = true
+    }
+    window.addEventListener('keydown', onKey)
+  } else {
+    document.body.style.overflow = previousOverflow
+    if (appRoot) appRoot.inert = previousInert
+    window.removeEventListener('keydown', onKey)
+  }
 })
 
 onBeforeUnmount(() => {
-  document.body.style.overflow = ''
+  document.body.style.overflow = previousOverflow
+  if (appRoot) appRoot.inert = previousInert
   window.removeEventListener('keydown', onKey)
 })
 </script>
@@ -76,7 +109,15 @@ onBeforeUnmount(() => {
 
     <Teleport to="body">
       <div v-if="open" class="zoom-overlay" @click.self="close">
-        <div class="zoom-panel" role="dialog" aria-modal="true" :aria-label="`放大查看：${title}`">
+         <div
+           ref="panel"
+           class="zoom-panel"
+           role="dialog"
+           aria-modal="true"
+           tabindex="-1"
+           :aria-label="`放大查看：${title}`"
+           @keydown="onPanelKeydown"
+         >
           <header class="zoom-head">
             <span class="zoom-title">{{ title }}</span>
              <button ref="closeBtn" class="zoom-close" type="button" aria-label="关闭图表弹层" title="关闭（Esc）" @click="close">✕</button>
@@ -149,6 +190,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   padding: 24px;
   background: rgba(3, 7, 18, 0.8);
+  overscroll-behavior: contain;
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
   animation: zoom-fade 0.16s ease;

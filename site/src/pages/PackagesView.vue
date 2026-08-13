@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PageHero from '../components/PageHero.vue'
 import BaseChart from '../components/BaseChart.vue'
 import DataTable from '../components/DataTable.vue'
@@ -13,6 +14,9 @@ const pairingTable = doc.tables.find((x) => x.path.includes('能力缝（Seam）
 const restructureHeadings = doc.headings.filter(
   (h) => h.path.includes('包与能力演进') && /^[0-9]+\/[0-9]+|三次结构性重组/.test(h.text)
 )
+const route = useRoute()
+const router = useRouter()
+const queryValue = (value) => (Array.isArray(value) ? value[0] : value)
 
 // ---------- sunburst ----------
 const sunData = computed(() =>
@@ -126,7 +130,8 @@ const birthStart = new Date('2026-06-10').getTime()
 const birthEnd = new Date('2026-08-13').getTime()
 const birthSpan = birthEnd - birthStart
 const birthPos = (date) => Math.min(100, Math.max(0, ((new Date(date).getTime() - birthStart) / birthSpan) * 100))
-const selGroup = ref(groups[0]?.name ?? '')
+const initialGroup = queryValue(route.query.group)
+const selGroup = ref(groupByName[initialGroup] ? initialGroup : groups[0]?.name ?? '')
 const selGroupInfo = computed(() => groupByName[selGroup.value])
 
 // 里程碑轴：标签按真实日期定位（与下方时间轴对齐）
@@ -202,7 +207,26 @@ const selTick = computed(() => tickLayout.value.find((t) => t.g.name === selGrou
 const STRIP_H = computed(() => chipLayout.value.rows * CHIP_ROW_H + CHIP_TOP + 92)
 
 // ---------- 领域详情 ----------
-const openDomain = ref(1)
+const initialDomain = Number.parseInt(queryValue(route.query.domain), 10)
+const openDomain = ref(initialDomain >= 1 && initialDomain <= domains.length ? initialDomain : 1)
+
+watch(
+  () => [route.query.group, route.query.domain],
+  ([group, domain]) => {
+    const nextGroup = queryValue(group)
+    const nextDomain = Number.parseInt(queryValue(domain), 10)
+    selGroup.value = nextGroup && groupByName[nextGroup] ? nextGroup : groups[0]?.name ?? ''
+    openDomain.value = nextDomain >= 1 && nextDomain <= domains.length ? nextDomain : 1
+  }
+)
+watch([selGroup, openDomain], () => {
+  const query = { ...route.query }
+  if (selGroup.value === groups[0]?.name) delete query.group
+  else query.group = selGroup.value
+  if (openDomain.value === 1) delete query.domain
+  else query.domain = String(openDomain.value)
+  router.replace({ query })
+})
 const domainStats = (d) => {
   let pkgs = 0
   let commits = 0
