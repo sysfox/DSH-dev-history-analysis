@@ -10,6 +10,7 @@ import { initMermaid, renderMermaidSvg } from '../lib/mermaid'
 import rawMd from '../../../DEVELOPMENT-HISTORY.md?raw'
 
 const route = useRoute()
+const tocOpen = ref(true)
 
 // ---- markdown-it 实例 ----
 const md = new MarkdownIt({
@@ -351,7 +352,10 @@ async function renderDoc() {
   if (route.hash) jumpToHash(route.hash)
 }
 
-onMounted(renderDoc)
+onMounted(() => {
+  if (window.matchMedia('(max-width: 980px)').matches) tocOpen.value = false
+  renderDoc()
+})
 
 watch(
   () => route.hash,
@@ -418,8 +422,22 @@ function toTop() {
           <div v-else-if="query" class="search-empty">无匹配行</div>
         </div>
         <nav class="toc side-card" aria-label="目录">
-          <div class="toc-title mono">目录 · {{ toc.length }} 章</div>
-          <div class="toc-scroll">
+          <div class="toc-head">
+            <div class="toc-title mono">目录 · {{ toc.length }} 章</div>
+            <button
+              class="toc-toggle"
+              type="button"
+              :aria-expanded="tocOpen"
+              aria-controls="reader-toc-scroll"
+              @click="tocOpen = !tocOpen"
+            >
+              {{ tocOpen ? '收起' : '展开' }}
+              <svg viewBox="0 0 16 16" aria-hidden="true" :class="{ rotated: !tocOpen }">
+                <path d="m4 6 4 4 4-4" />
+              </svg>
+            </button>
+          </div>
+          <div v-show="tocOpen" id="reader-toc-scroll" class="toc-scroll">
             <template v-for="h2 in toc" :key="h2.id">
               <a :href="`#${h2.id}`" class="toc-h2" :class="{ on: activeId === h2.id }" @click.prevent="jumpToHash(`#${h2.id}`)">
                 {{ h2.text }}
@@ -488,12 +506,13 @@ function toTop() {
 }
 .reader-body {
   display: grid;
-  grid-template-columns: 292px 1fr;
+  grid-template-columns: minmax(0, 292px) minmax(0, 1fr);
   gap: 26px;
   margin-top: 26px;
   align-items: start;
 }
 .reader-side {
+  min-width: 0;
   position: sticky;
   top: calc(var(--nav-h) + 16px);
   display: flex;
@@ -595,13 +614,50 @@ function toTop() {
   flex: 1;
   min-height: 0;
 }
+.toc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .toc-title {
   font-size: 10.5px;
   letter-spacing: 0.16em;
   color: var(--ink-4);
   padding: 0 4px;
 }
+.toc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.toc-toggle:hover {
+  border-color: var(--blue);
+  color: var(--ink);
+  background: rgba(77, 107, 254, 0.12);
+}
+.toc-toggle svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  transition: transform 0.15s ease;
+}
+.toc-toggle svg.rotated {
+  transform: rotate(-90deg);
+}
 .toc-scroll {
+  min-width: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
@@ -618,6 +674,7 @@ function toTop() {
   font-size: 12.5px;
   line-height: 1.5;
   border-left: 2px solid transparent;
+  overflow-wrap: anywhere;
 }
 .toc-h2 {
   color: var(--ink-2);
@@ -649,6 +706,8 @@ function toTop() {
 }
 .reader-main {
   min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .md-section {
   min-height: var(--section-min-height);
@@ -841,7 +900,7 @@ function toTop() {
 }
 @media (max-width: 980px) {
   .reader-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .reader-side {
     position: static;
