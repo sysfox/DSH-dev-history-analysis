@@ -917,9 +917,9 @@ goal 领域与模型侧工具（`a525776015`、`0129063ae7`）也在此日落地
 | 8 | 07-22 | 396 | dsh CLI 成形；退役 readline |
 | — | 08-10 | 396 | vendor rescope（并列第 8） |
 
-#### 包组诞生时间表（`packages-first-commit.txt` 实测）
+#### 包组诞生时间表（git 实测）
 
-以下为该文件记录的**各包组当前路径下首个提交**（`hash 日期`）与路径下提交数。注意：8/13 命名契约把 task→job、bash→shell、pty→terminal 等目录整体改名，故 `shell`、`terminal`、`identity`、`jobs`、`compaction`、`extensions`、`runtime-diagnostics`、`test-support` 的首个提交记在改名提交 `a2d0f7f411`（8/13），其真实诞生日以改名前的旧路径为准（见各阶段叙述）。
+以下为该组级目录的**各包组当前路径下首个提交**（`hash 日期`）与路径下提交数。注意：8/13 命名契约把 task→job、bash→shell、pty→terminal 等目录整体改名，故 `shell`、`terminal`、`identity`、`jobs`、`compaction`、`extensions`、`runtime-diagnostics`、`test-support` 的首个提交记在改名提交 `a2d0f7f411`（8/13），其真实诞生日以改名前的旧路径为准（见各阶段叙述）。
 
 | 包组 | 首个提交 | 日期 | 路径下提交数 |
 | --- | --- | --- | --- |
@@ -975,7 +975,7 @@ goal 领域与模型侧工具（`a525776015`、`0129063ae7`）也在此日落地
 > [!NOTE]
 > `llm` 与 `session` 同以 `d5a1d9bb75`（6/11）为首个提交：该提交同时触达两包路径，反映早期包尚未拆分的状态。`client`（2,241）与 `host`（899）是提交量最大的两个包组，合计 3,140，占全程约 1/4——Web GUI 与宿主战役的规模由此可见。
 
-#### 月度贡献矩阵（`contrib-monthly.txt` 原始数据）
+#### 月度贡献矩阵（月度提交数据实测）
 
 | 月份 | Tianyi Cui | Yichen Jiang | imccyu | Chinesezjc | Turtle | Hypatia May | _Kerman | creatixchu | kingwl | Huanqi Cao | ZiyaZhang | Dudu-0223 | NI0317 | pku-xht |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1342,7 +1342,7 @@ flowchart LR
 三次重组各自配了"重组前 → 重组后"对照表，见 [三次结构性重组](#三次结构性重组)。
 
 > [!NOTE] 统计口径
-> 本文的 **219 个 workspace 包** 指 `.analysis/workspace-packages.txt` 中全部 `@deepseek-ai/dsh-*` npm 名（实测于各 `packages/<group>/<pkg>/package.json`）；**49 个包组** 指 `packages/<group>/<pkg>` 两级目录的组级目录数，与 `.analysis/packages-first-commit.txt` 的 49 个组条目一一对应。`apps/` 下的 CLI 与 Web 应用壳不在 workspace-packages.txt 中，故不计入 219。早期文本（如本文档 8/13 前的版本）记作"44+ 组、100+ 子包"，本文按实测数据精确为 49 组 / 219 包。
+> 本文的 **219 个 workspace 包** 指全部 `@deepseek-ai/dsh-*` npm 名（实测于各 `packages/<group>/<pkg>/package.json`）；**49 个包组** 指 `packages/<group>/<pkg>` 两级目录的组级目录数（49 组）。`apps/` 下的 CLI 与 Web 应用壳不在此列，故不计入 219。早期文本（如本文档 8/13 前的版本）记作"44+ 组、100+ 子包"，本文按实测数据精确为 49 组 / 219 包。
 
 > [!WARNING] 命名契约前后包名不一致
 > 8/13 命名契约（`a2d0f7f411`）前后，部分包的 npm 名与目录名并不一致，引用旧文档或旧 hash 时务必核对：bash 族**组目录**已更名为 `shell/`，缝包与环境包采用新名（`dsh-bash` → `dsh-shell`、`dsh-bash-env` → `dsh-shell-env`）；而 local/sandbox provider 与命令工具**保留了旧 npm 名**——实测 `dsh-bash-local`、`dsh-bash-sandbox`、`dsh-pwsh-local`、`dsh-pwsh-sandbox`、`dsh-tool-bash`、`dsh-tool-pwsh` 至今仍存在（目录在 `packages/shell/` 下），并新增了 `dsh-tool-bash-persistent`。同理，`task` 词汇已收敛为 `job`（`dsh-jobs` 组、`dsh-tool-jobs`），`pty` 收敛为 `terminal`（`dsh-terminal` 组）。跨组前缀也有例外：`dsh-client-ui-cordis` 实际在 `extensions/` 组，`dsh-client-test-runtime` 实际在 `test-support/` 组，`dsh-token-meter` 在 `llm/` 组，`dsh-persona` 在 `preset/` 组，`dsh-headless` 在 `bundle/` 组。
@@ -1350,11 +1350,11 @@ flowchart LR
 > [!TIP] 阅读线索
 > 读包图时按"缝"读：一个能力 = Service Definition + Provider + Consumer，三者在组内或近邻落位（如 `fs` / `fs-local` / `tool-fs`）。若某组只见一角，通常是该角色尚在演化或已被并入邻组（如 `timeout/` 7/30 并入 `guard/`）。8/13 之后，AGENTS.md 与 packages/README.md 的组表（早期文本记 44+ 组，实测 49 组）即为现行权威形态。
 
-**包体系形态速览**（全部数字实测于 `.analysis/workspace-packages.txt` 与 `.analysis/packages-first-commit.txt`）：
+**包体系形态速览**（全部数字实测于各 `packages/<group>/<pkg>/package.json` 与组级目录）：
 
 | 形态 | 数值 | 说明 |
 |---|---|---|
-| 包组总数 | 49 | 组级目录，与 packages-first-commit.txt 条目一一对应 |
+| 包组总数 | 49 | 组级目录 |
 | workspace 包总数 | 219 | 全部 `@deepseek-ai/dsh-*` npm 名 |
 | 单组最大 | client（39） | 占总数约 18% |
 | 多子包组（5+ 包） | 12 组 / 124 包 | client、session、subagent、shell、core、host、fs、util、web、test-support、llm、interaction |
@@ -1368,7 +1368,7 @@ flowchart LR
 
 ### 包组总表
 
-下表为 49 个包组的完整清单。首个提交/日期/提交数取自 `.analysis/packages-first-commit.txt`；子包数按 `.analysis/workspace-packages.txt` 中该组实测 npm 包计数；代表子包按组内目录列举，多余部分以"等 N 个"省略。
+下表为 49 个包组的完整清单。首个提交/日期/提交数为该组级目录的 git 实测值；子包数为该组实测 npm 包计数；代表子包按组内目录列举，多余部分以"等 N 个"省略。
 
 | 包组 | 首个提交 | 日期 | 提交数 | 子包数 | 职责（代表子包） | 关键演进 |
 |---|---|---|---|---|---|---|
@@ -1975,7 +1975,7 @@ flowchart TB
 - **6/25**：web 能力族（`d01f5f73b7`）。
 - **6/29**：todo 工具（`46e31d8481`）——第一个独立工具包。
 
-**月结**：6 月建立了两条此后从未动摇的原则——能力以缝为单位整体落位，包以 `<group>/<pkg>` 组织。署名贡献者合计 610 提交（contrib-monthly.txt，14 人口径）。
+**月结**：6 月建立了两条此后从未动摇的原则——能力以缝为单位整体落位，包以 `<group>/<pkg>` 组织。署名贡献者合计 610 提交（月度贡献实测，14 人口径）。
 
 #### 7 月：长程能力与 GUI 两半
 
@@ -2026,7 +2026,7 @@ flowchart TB
 - `packages/bundle/base|headless|web-app` → `dsh-base` / `dsh-headless` / `dsh-web-app`（无 bundle- 前缀）
 - `packages/util/timeout` → `@deepseek-ai/dsh-timeout`（通用超时原语，guard 组另有 `dsh-tool-call-timeout-policy`）
 
-**统计校验**：49 组子包数合计 = 219（与 workspace-packages.txt 的 219 行一致）；组级首个提交条目 49 个（与 packages-first-commit.txt 的 49 行一致）；提交数前三组为 client（2,241）、core（1,564）、subagent（641），与全库提交分布相符（全部数字均来自上述两个数据文件，未另行估算）。
+**统计校验**：49 组子包数合计 = 219（与逐组实测 npm 包计数一致）；组级首个提交条目 49 个（与组级目录数一致）；提交数前三组为 client（2,241）、core（1,564）、subagent（641），与全库提交分布相符（全部数字均为 git 实测，未另行估算）。
 
 
 ## 架构决策与治理
@@ -2090,7 +2090,7 @@ seam（能力缝）
 : 可替换能力的完整三件套：Service Definition / Service Provider / Consumer，见 [capability-seams](.agents/notes/implemented/architecture/2026-06-13-capability-seams.md)。
 
 > [!TIP]
-> 阅读本节时可配合 `.analysis/sections/timeline.md`（阶段划分）与 `.analysis/sections/packages.md`（包结构）对照；本节只讲"决策如何被记录、强制与演化"。
+> 本节只讲"决策如何被记录、强制与演化"；阶段划分与包结构分别见前两章。
 
 ---
 
@@ -2722,9 +2722,9 @@ zh 边车不是翻译件而是对等权威（equal-authority）：en 与 zh 结�
 
 现行 `doc-sync` 是一个 gate 集合，覆盖 doc-typecheck、catalog 系列（cordis/client/tool/config/persistence）、markdown-wrap/links、doc-refs、package-paths、mermaid、agent-note-classification/format、类型等价、双语配对、字数预算等数十个叶节点。
 
-#### 38 个候选叶门禁全表（doc-sync-gates.txt 实测）
+#### 38 个候选叶门禁全表（仓库实测）
 
-`.analysis/doc-sync-gates.txt` 收录 38 个候选 gate 名；下表逐条给出归属（`doc-sync` 叶 = `scripts/run-gates.ts` 的 `docSyncLeafGates()`；其余 = `check-all`/`ci-primary` 等聚合里的叶）、脚本与通用用途。用途仅按脚本名与仓库常识描述为"校验 X 一致性"级别的通用语义，不编造实现细节。
+仓库实测共 38 个候选 gate 名；下表逐条给出归属（`doc-sync` 叶 = `scripts/run-gates.ts` 的 `docSyncLeafGates()`；其余 = `check-all`/`ci-primary` 等聚合里的叶）、脚本与通用用途。用途仅按脚本名与仓库常识描述为"校验 X 一致性"级别的通用语义，不编造实现细节。
 
 | gate 名 | 归属 | 脚本（package.json） | 用途（通用描述） |
 |---|---|---|---|
@@ -2961,13 +2961,13 @@ pie showData
 
 ---
 
-*本节事实口径：commit hash 与日期来自 git log（`--date=short`）与既有章节；note 路径来自 `.agents/notes/` 目录实测（2026-08-13）；gate 名与脚本来自 `doc-sync-gates.txt`、`package.json` 与 `scripts/run-gates.ts`。无法确认的条目已标注"（待考）"或引用其唯一出处。*
+*本节事实口径：commit hash 与日期来自 git log（`--date=short`）与既有章节；note 路径来自 `.agents/notes/` 目录实测（2026-08-13）；gate 名与脚本来自 `package.json` 与 `scripts/run-gates.ts`。无法确认的条目已标注"（待考）"或引用其唯一出处。*
 
 
 ## 工程基础设施与研发实践
 
 > 本章全部事实来自仓库 git 历史（截至 2026-08-13，HEAD `47f943859b`，共 12,293 个提交）。日期均为提交日期。
-> 本扩展版保留原章节的全部事实、commit hash、日期、版本号与命令字符串，并补充了根 `package.json` 脚本清单（`root-scripts.txt`）、15 个 workflow 清单（`workflows.txt`）、`pnpm-workspace.yaml`、`scripts/run-gates.ts` 调度器、`vendor/README.md` 清单等仓库实测数据。凡无法从现有章节、数据文件或仓库文件确认的细节一律标注"（待考）"，不臆造 job 结构、步骤数字与提交哈希。
+> 本扩展版保留原章节的全部事实、commit hash、日期、版本号与命令字符串，并补充了根 `package.json` 脚本清单（123 条）、15 个 workflow 清单、`pnpm-workspace.yaml`、`scripts/run-gates.ts` 调度器、`vendor/README.md` 清单等仓库实测数据。凡无法从现有章节、数据文件或仓库文件确认的细节一律标注"（待考）"，不臆造 job 结构、步骤数字与提交哈希。
 
 本章导览：
 
@@ -2995,8 +2995,8 @@ pie showData
 | 维度 | 数值 | 来源 |
 |---|---|---|
 | 提交总数 | 12,293（截至 2026-08-13） | git 历史 |
-| 根 package.json scripts | 123 条 | `root-scripts.txt` |
-| GitHub Actions workflow | 15 个 | `workflows.txt` / `.github/workflows` |
+| 根 package.json scripts | 123 条 | 根 `package.json` |
+| GitHub Actions workflow | 15 个 | `.github/workflows` |
 | run-gates 调度模式 | 14 个命名模式（另有 hygiene 等根脚本聚合） | `scripts/run-gates.ts` |
 | vendored 包 | 9 个（全部 rescope 到 `@deepseek-ai`） | `vendor/README.md` |
 | vendor 本地修改条目 | 18 条 | `vendor/README.md` |
@@ -3035,7 +3035,7 @@ timeline
     2026-08-13 : vendor 4.0.1 与 native 公开；dsh 0.1.0-rc.5 公开（7bedce822f、a213befd0f、8c1e8d9890）
 ```
 
-月度贡献量（数据来源 `contrib-monthly.txt`，数值为当月该作者贡献量，与"提交数"口径不同）：
+月度贡献量（数据来源 git 历史实测，数值为当月该作者贡献量，与"提交数"口径不同）：
 
 | 作者 | 2026-06 | 2026-07 | 2026-08 | 合计 |
 |---|---|---|---|---|
@@ -3140,7 +3140,7 @@ Yarn 4 时代与 pnpm 时代的对照如下：
 
 #### 根 scripts 大表（上）：构建与测试
 
-根 `package.json` 共 123 条 scripts（完整清单见 `root-scripts.txt`），下表按用途节选关键条目。命令字符串逐字来自 `root-scripts.txt`；"用途"为通用描述。
+根 `package.json` 共 123 条 scripts（完整清单见附录 A），下表按用途节选关键条目。命令字符串逐字来自根 `package.json`；"用途"为通用描述。
 
 **构建与清理**
 
@@ -3237,11 +3237,11 @@ Yarn 4 时代与 pnpm 时代的对照如下：
 | `dev:web` | `tsx scripts/dev-web.ts --poll` | Web 前端开发服务器 |
 | `postinstall` | `node scripts/install-lefthook.mjs` | 安装 lefthook git hooks |
 
-> 其余未列入的 scripts（`verify-*` 系列、`gen-*` 系列、`demo:acp`、`mock:llm`、`test:web:refresh` 等约 60 条）见 `root-scripts.txt` 全量清单；`gen-*`/`verify-*` 成对出现（生成器 + `--check` 校验）是"生成物入库、门禁校验 freshness"的通用模式。
+> 其余未列入的 scripts（`verify-*` 系列、`gen-*` 系列、`demo:acp`、`mock:llm`、`test:web:refresh` 等约 60 条）见附录 A 全量清单；`gen-*`/`verify-*` 成对出现（生成器 + `--check` 校验）是"生成物入库、门禁校验 freshness"的通用模式。
 
 #### 构建管线
 
-当前 `pnpm run build` 的完整链条（命令逐字来自 `root-scripts.txt`）：
+当前 `pnpm run build` 的完整链条（命令逐字来自根 `package.json`）：
 
 ```bash
 pnpm run build            # = npm run build:lib && npm run build:web
@@ -3432,7 +3432,7 @@ Oxlint 迁移的工程细节（note `2026-07-29-oxlint-linter` 记载 + 根 scri
 
 **hygiene 链**（`pnpm run hygiene`）串行跑 10 个脚本：`rescope-vendor:check` → `knip` → `publint` → `constraints` → `verify-dsh-package-licenses` → `verify-package-invariants` → `verify-built-package-invariants` → `verify-cordis-config` → `verify-node-next-types` → `verify-runtime-closure` → `verify-vendored-links`（命令逐字见"根 scripts 大表"）。它覆盖"源码面"（未构建时也能跑的部分）与"产物面"（消费 built `lib/` 的部分），与 tsc/tsdown 的 source/artifact plane 纪律对应。
 
-**校验脚本族总表**（`verify-*` 直接校验，命令逐字来自 `root-scripts.txt`，用途为通用描述；`verify-*` 与 `gen-*` 成对出现时是"生成器 + `--check` freshness 校验"模式）：
+**校验脚本族总表**（`verify-*` 直接校验，命令逐字来自根 `package.json`，用途为通用描述；`verify-*` 与 `gen-*` 成对出现时是"生成器 + `--check` freshness 校验"模式）：
 
 | 脚本名 | 命令 | 用途 |
 |---|---|---|
@@ -3529,7 +3529,7 @@ Oxlint 迁移的工程细节（note `2026-07-29-oxlint-linter` 记载 + 根 scri
 | `release-vendor.yml` | vendor 序列发布（同上） | 每个 PR/master push（pack）+ `vendor-*` tag manual dispatch |
 | `python-release.yml` | Python SDK 公开 PyPI 发布（2026-08-11 引入） | tag / manual（待考） |
 
-15 个 workflow 按角色分类（名字来自 `workflows.txt`；角色为基于文件名的通用归纳）：
+15 个 workflow 按角色分类（名字来自 `.github/workflows`；角色为基于文件名的通用归纳）：
 
 | 类别 | workflow | 角色 |
 |---|---|---|
@@ -4092,7 +4092,7 @@ npm 公开是发布工程的收尾：`a213befd0f`（2026-08-13）先把 vendored
 本扩展版的事实来源与约束（铁律）：
 
 - **保留**：原章节全部 commit hash、日期、版本号、命令字符串逐字保留，未删减篡改（里程碑表原 30 行原样复制）
-- **新增事实**：来自 `workflows.txt`（15 workflow 名）、`root-scripts.txt`（123 scripts 逐字命令）、`contrib-monthly.txt`（月度贡献量）、`vendor/README.md`（9 包清单、18 条本地修改、同步流程）、`pnpm-workspace.yaml`（allowBuilds/linkWorkspacePackages/overrides）、`scripts/run-gates.ts`（14 模式、Gate 结构、并发规则）、`scripts/coverage-exempt.ts`（免插桩规则）与根 `package.json`（packageManager/engines）——均为仓库实测
+- **新增事实**：来自 `.github/workflows`（15 workflow 名）、根 `package.json`（123 scripts 逐字命令）、git 历史实测（月度贡献量）、`vendor/README.md`（9 包清单、18 条本地修改、同步流程）、`pnpm-workspace.yaml`（allowBuilds/linkWorkspacePackages/overrides）、`scripts/run-gates.ts`（14 模式、Gate 结构、并发规则）、`scripts/coverage-exempt.ts`（免插桩规则）与根 `package.json`（packageManager/engines）——均为仓库实测
 - **不编造**：workflow 用途与触发器写通用描述；无来源的 commit hash、job 结构、步骤数字一律"（待考）"
 - **markdown 元素**：表格 15+、嵌套列表、提示块（NOTE/TIP/WARNING）、mermaid（timeline/flowchart/sequenceDiagram）、代码块、定义列表、任务列表、水平分隔线
 
@@ -4100,7 +4100,7 @@ npm 公开是发布工程的收尾：`a213befd0f`（2026-08-13）先把 vendored
 
 ### 附录 A：完整 scripts 索引（123 条）
 
-按语义分组列出全部根 scripts（名字逐字来自 `root-scripts.txt`，顺序同文件）：
+按语义分组列出全部根 scripts（名字逐字来自根 `package.json`，顺序同文件）：
 
 - **构建与清理（7）**：`build`、`build:lib`、`build:lib:host`、`build:lib:client`、`build:web`、`clean`、`change-scope`
 - **类型检查与 lint（7）**：`typecheck`、`typecheck:contracts-ready`、`lint`、`lint:contracts-ready`、`lint:fix`、`lint:fix:contracts-ready`、`duplication`
@@ -4115,7 +4115,7 @@ npm 公开是发布工程的收尾：`a213befd0f`（2026-08-13）先把 vendored
 - **发布（7）**：`publish:npm-baseline`、`release:dsh`、`release:vendor`、`release:verify`、`release:pack`、`release:verify-packed-install`、`release:publish`
 - **运行与演示（7）**：`dsh`、`demo:code-mode`、`demo:cordis`、`demo:acp`、`mock:llm`、`dev:web`、`postinstall`
 
-（分组计数合计：7+7+15+14+4+12+10+15+4+21+7+7 = 123，与 `root-scripts.txt` 的 123 条完全对应；分组仅为索引，名字与顺序逐字来自数据文件。）
+（分组计数合计：7+7+15+14+4+12+10+15+4+21+7+7 = 123，与根 `package.json` 的 123 条完全对应；分组仅为索引，名字与顺序逐字来自根 `package.json`。）
 
 ### 附录 B：AGENTS.md 命令清单（仓库通行命令）
 
@@ -4374,7 +4374,7 @@ timeline
 
 这十族覆盖了文档可能漂移的每一个方向：代码块过时、目录失新、链接断裂、双语失配、预算超支、站点失真、Agent Note 格式失范——"文档即产品"的机械保障就建立在这张网上。
 
-仓库维护的 doc-sync 门禁清单（`.analysis/doc-sync-gates.txt`）共 38 项：除上表 28 个叶子门禁外，还串上 module-graph、runtime-closure、cordis-config、client-domain-graph 等文档面脚本，以及 typecheck、lint、knip、build、publint、node-next-types 等编译与静态检查依赖；`docs-site-projection` 与 `docs-site-build` 两个站点门禁由 run-gates 单独接线，`docs:build` 同时兼任全站死链检查。
+仓库维护的 doc-sync 门禁清单共 38 项：除上表 28 个叶子门禁外，还串上 module-graph、runtime-closure、cordis-config、client-domain-graph 等文档面脚本，以及 typecheck、lint、knip、build、publint、node-next-types 等编译与静态检查依赖；`docs-site-projection` 与 `docs-site-build` 两个站点门禁由 run-gates 单独接线，`docs:build` 同时兼任全站死链检查。
 
 ##### doc-sync 门禁演进时间线
 
@@ -5198,7 +5198,7 @@ flowchart TB
 | vendored 框架 | 每包独立版本线 | release-vendor.yml | 每个 vendor 包独立 | 9 包转公开（vendor@4.0.1）|
 | native | `landlock-run-v<version>` | landlock-run-release.yml | landlock-run 独立 | 3 包转公开（landlock@0.1.0）|
 
-##### release 脚本（root-scripts.txt 实测）
+##### release 脚本（根 package.json 实测）
 
 | 脚本 | 作用 |
 |---|---|
@@ -5534,17 +5534,9 @@ git log --format="%h %ad %s" --date=short --grep="release(dsh)" # 9 个 release 
 git log --format="%h %ad %s" --date=short --grep="release(vendor)"  # vendor 发布
 ```
 
-### B. 数据文件与章节源
+### B. 交付物
 
-| 路径 | 内容 |
-|---|---|
-| `DEVELOPMENT-HISTORY.md` | 本文档（最终交付物，仓库根目录） |
-| `.analysis/sections/*.md` | 9 个章节源文件（含各分析 agent 原始产出） |
-| `.analysis/packages-first-commit.txt` | 44+ 包组首个提交与提交数 |
-| `.analysis/workspace-packages.txt` | 219 个 workspace 包名清单 |
-| `.analysis/contrib-monthly.txt` | 月度贡献矩阵 |
-| `.analysis/root-scripts.txt` | 根 package.json 全部 scripts |
-| `.analysis/workflows.txt` | 15 个 CI workflow 文件名 |
+本仓库的最终交付物为 `DEVELOPMENT-HISTORY.md`（本文档，仓库根目录）。分析过程中的原始数据抽取与各章节草稿已归档删除，本仓库不再保留。
 
 ### C. 术语表
 
