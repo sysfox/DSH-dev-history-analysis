@@ -274,7 +274,9 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
           <ul v-if="(eventsByDate[selected] || []).length" class="dd-list">
             <li v-for="(e, i) in eventsByDate[selected]" :key="i">
               <span class="dd-event">{{ e.event }}</span>
-              <HashChip v-if="isHash(e.source)" :hash="e.source" />
+               <span v-if="hashTokens(e.source).length" class="dd-src">
+                 <HashChip v-for="(h, hi) in hashTokens(e.source)" :key="hi" :hash="h" />
+               </span>
             </li>
           </ul>
           <p v-else class="dd-empty">当日无关键事件记录。</p>
@@ -388,12 +390,13 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
           <span class="en">KEY DATES · 65 天中的转折点</span>
         </div>
         <div class="filter-row">
-          <button class="chip filter-chip" :class="{ on: phaseFilter === 0 }" @click="phaseFilter = 0">全部</button>
+           <button class="chip filter-chip" :class="{ on: phaseFilter === 0 }" :aria-pressed="phaseFilter === 0" @click="phaseFilter = 0">全部</button>
           <button
             v-for="p in PHASES"
             :key="p.id"
             class="chip filter-chip"
             :class="{ on: phaseFilter === p.id }"
+            :aria-pressed="phaseFilter === p.id"
             @click="phaseFilter = p.id"
           >
             <i class="dot" :style="{ background: p.color }"></i>阶段{{ p.id }}
@@ -484,6 +487,12 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
   font-size: 13.5px;
   margin-right: 10px;
 }
+.dd-src {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  vertical-align: middle;
+}
 .dd-empty {
   margin-top: 8px;
   color: var(--ink-4);
@@ -532,9 +541,10 @@ const timelineMermaid = mermaid.filter((m) => m.path.includes('可视化：merma
   margin-bottom: 14px;
 }
 .filter-chip {
+  min-height: 40px;
   cursor: pointer;
   border-color: var(--line);
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .filter-chip.on {
   border-color: var(--blue);

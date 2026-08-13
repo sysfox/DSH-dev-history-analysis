@@ -51,11 +51,13 @@ function clickHead(i) {
           <th
             v-for="(h, i) in headers"
             :key="i"
-            :class="{ 'num-th': numCols.includes(i) }"
+            :class="{ 'num-th': numCols.includes(i), sortable: sortable }"
             :aria-sort="sortIdx === i ? (sortDir === 1 ? 'ascending' : 'descending') : undefined"
-            @click="clickHead(i)"
           >
-            {{ h }}<span v-if="sortIdx === i" class="arr">{{ sortDir === 1 ? '▲' : '▼' }}</span>
+            <button v-if="sortable" type="button" class="th-sort" @click="clickHead(i)">
+              {{ h }}<span v-if="sortIdx === i" class="arr">{{ sortDir === 1 ? '▲' : '▼' }}</span>
+            </button>
+            <span v-else>{{ h }}</span>
           </th>
         </tr>
       </thead>

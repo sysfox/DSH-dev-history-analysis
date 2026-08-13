@@ -18,7 +18,17 @@ async function onClick() {
 </script>
 
 <template>
-  <code class="hash" :title="copyable ? '点击复制完整 hash' : ''" tabindex="0" @click="onClick" @keydown.enter="onClick">
+  <code
+    class="hash"
+    :class="{ copyable }"
+    :title="copyable ? '点击复制完整 hash' : ''"
+    :tabindex="copyable ? 0 : undefined"
+    :role="copyable ? 'button' : undefined"
+    :aria-label="copyable ? `复制 hash ${clean}` : undefined"
+    @click="onClick"
+    @keydown.enter="onClick"
+    @keydown.space.prevent="onClick"
+  >
     {{ clean }}
     <span v-if="copied" class="copied">✓ 已复制</span>
   </code>
@@ -27,6 +37,9 @@ async function onClick() {
 <style scoped>
 .hash {
   position: relative;
+}
+.hash.copyable {
+  cursor: pointer;
 }
 .copied {
   position: absolute;

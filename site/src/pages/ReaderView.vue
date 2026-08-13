@@ -125,6 +125,10 @@ function jumpToLine(line) {
   }
 }
 
+function clearSearch() {
+  query.value = ''
+}
+
 function flash(el) {
   el.classList.add('flash')
   setTimeout(() => el.classList.remove('flash'), 1600)
@@ -263,9 +267,21 @@ function toTop() {
       <!-- 侧栏：搜索 + TOC -->
       <aside class="reader-side">
         <div class="side-card">
-          <input v-model="query" type="search" class="search-box" placeholder="搜索全文（行级）…" aria-label="搜索全文" />
-          <div v-if="searchResults.length" class="search-results">
-            <button v-for="r in searchResults" :key="r.line" class="search-hit" @click="jumpToLine(r.line)">
+           <div class="search-wrap">
+             <input
+               v-model="query"
+               type="search"
+               class="search-box"
+               placeholder="搜索全文…"
+               aria-label="搜索全文"
+               aria-controls="search-results"
+               @keydown.escape="clearSearch"
+             />
+             <button v-if="query" type="button" class="search-clear" aria-label="清除搜索" @click="clearSearch">×</button>
+           </div>
+           <div v-if="searchResults.length" class="search-results">
+             <div id="search-results" class="search-count">{{ searchResults.length }} 个匹配，点击跳到所属章节</div>
+             <button v-for="r in searchResults" :key="r.line" class="search-hit" @click="jumpToLine(r.line)">
               <span class="mono hit-line">L{{ r.line }}</span>
               <span class="hit-text">{{ r.text }}</span>
             </button>
@@ -362,6 +378,33 @@ function toTop() {
   color: var(--ink);
   font-size: 13px;
   font-family: var(--font-b);
+}
+.search-wrap {
+  position: relative;
+}
+.search-clear {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.search-clear:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.search-count {
+  padding: 3px 8px 5px;
+  color: var(--ink-4);
+  font-family: var(--font-m);
+  font-size: 10.5px;
 }
 .search-box:focus {
   outline: none;

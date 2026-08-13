@@ -8,7 +8,7 @@ defineProps({
 
 <template>
   <section class="page-hero">
-    <div class="container">
+    <div>
       <div class="eyebrow">{{ kicker }}</div>
       <h1>{{ title }}</h1>
       <p v-if="lead" class="lead">{{ lead }}</p>
@@ -19,7 +19,7 @@ defineProps({
 
 <style scoped>
 .page-hero {
-  padding: 46px 0 10px;
+  padding: 24px 0 10px;
 }
 .page-hero h1 {
   font-size: clamp(1.9rem, 4.6vw, 2.9rem);

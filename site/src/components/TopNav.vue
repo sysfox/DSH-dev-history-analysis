@@ -1,7 +1,9 @@
 <script setup>
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const mobileOpen = ref(false)
 const links = [
   { to: '/', label: '概览', en: 'OVERVIEW' },
   { to: '/timeline', label: '时间线', en: 'TIMELINE' },
@@ -12,6 +14,10 @@ const links = [
   { to: '/contributors', label: '贡献者', en: 'CONTRIBUTORS' },
   { to: '/reader', label: '原文', en: 'SOURCE' },
 ]
+
+watch(() => route.path, () => {
+  mobileOpen.value = false
+})
 </script>
 
 <template>
@@ -26,13 +32,24 @@ const links = [
           <small>DEVELOPMENT-HISTORY · 可视化</small>
         </span>
       </router-link>
-      <nav class="nav-links" aria-label="站点导航">
+      <button
+        class="nav-toggle"
+        type="button"
+        :aria-expanded="mobileOpen"
+        aria-controls="site-navigation"
+        :aria-label="mobileOpen ? '关闭站点导航' : '打开站点导航'"
+        @click="mobileOpen = !mobileOpen"
+      >
+        <span></span><span></span><span></span>
+      </button>
+      <nav id="site-navigation" class="nav-links" :class="{ open: mobileOpen }" aria-label="站点导航">
         <router-link
           v-for="l in links"
           :key="l.to"
           :to="l.to"
           class="nav-link"
           :class="{ active: route.path === l.to }"
+          :aria-current="route.path === l.to ? 'page' : undefined"
         >
           <span class="zh">{{ l.label }}</span>
           <span class="en">{{ l.en }}</span>
@@ -53,6 +70,7 @@ const links = [
   border-bottom: 1px solid var(--line-soft);
 }
 .topnav-inner {
+  position: relative;
   height: 100%;
   display: flex;
   align-items: center;
@@ -121,7 +139,8 @@ const links = [
   color: var(--ink-3);
   border: 1px solid transparent;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  min-height: 40px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .nav-link .zh {
   font-size: 13.5px;
@@ -160,6 +179,71 @@ const links = [
   }
   .nav-link .en {
     display: none;
+  }
+}
+
+.nav-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.nav-toggle span {
+  display: block;
+  height: 2px;
+  margin: 4px 0;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+@media (max-width: 760px) {
+  .topnav-inner {
+    gap: 8px;
+  }
+  .brand-text b {
+    font-size: 14px;
+  }
+  .nav-toggle {
+    display: block;
+  }
+  .nav-links {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(17, 26, 48, 0.98);
+    box-shadow: var(--shadow);
+  }
+  .nav-links.open {
+    display: flex;
+  }
+  .nav-link {
+    align-items: flex-start;
+    padding: 9px 12px;
+  }
+  .nav-link .en {
+    display: block;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-text {
+    display: none;
+  }
+  .brand-sky {
+    width: 42px;
   }
 }
 </style>

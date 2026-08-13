@@ -276,6 +276,8 @@ const restructures = [
                 <button
                   class="birth-chip"
                   :class="{ on: selGroup === c.g.name }"
+                  type="button"
+                  :aria-pressed="selGroup === c.g.name"
                   :title="`${c.g.name} · ${c.g.date} · ${numFmt(c.g.commits)} 提交`"
                   @click="selGroup = c.g.name"
                 >
@@ -289,6 +291,9 @@ const restructures = [
                 class="birth-tick"
                 :class="{ on: selGroup === t.g.name }"
                 :data-name="t.g.name"
+                :aria-label="`${t.g.name} · ${t.g.date} · ${numFmt(t.g.commits)} 提交`"
+                :aria-pressed="selGroup === t.g.name"
+                type="button"
                 :style="{ left: t.left + '%', background: phaseHexOf(t.g.date) }"
                 :title="`${t.g.name} · ${t.g.date} · ${numFmt(t.g.commits)} 提交`"
                 @click="selGroup = t.g.name"
@@ -486,9 +491,10 @@ const restructures = [
   color: var(--ink-2);
   font-family: var(--font-m);
   font-size: 11px;
+  min-height: 40px;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
   position: relative;
   z-index: 2;
 }
@@ -513,8 +519,17 @@ const restructures = [
   border-radius: 2px 2px 0 0;
   cursor: pointer;
   opacity: 0.7;
-  transition: all 0.15s ease;
+  transition: height 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
   padding: 0;
+}
+.birth-tick::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 40px;
+  height: 40px;
+  transform: translateX(-50%);
 }
 .birth-tick:hover {
   opacity: 1;

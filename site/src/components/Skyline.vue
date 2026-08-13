@@ -31,7 +31,7 @@ const phaseLegend = PHASES
 
 <template>
   <div class="sky" :style="{ '--h': height + 'px' }">
-    <div class="sky-bars" role="img" :aria-label="`65 天每日提交数柱状图，峰值 ${max} 次`">
+    <div class="sky-bars" role="group" :aria-label="`65 天每日提交数柱状图，峰值 ${max} 次`">
       <button
         v-for="d in days"
         :key="d.date"

@@ -15,13 +15,16 @@ const open = ref(false)
 provide('chartZoomBig', open)
 
 const closeBtn = ref(null)
+let previousFocus = null
 
 function openModal() {
+  previousFocus = document.activeElement
   open.value = true
   nextTick(() => closeBtn.value && closeBtn.value.focus())
 }
 function close() {
   open.value = false
+  nextTick(() => previousFocus?.focus?.())
 }
 function onWrapClick() {
   if (!props.clickable) openModal()
@@ -76,7 +79,7 @@ onBeforeUnmount(() => {
         <div class="zoom-panel" role="dialog" aria-modal="true" :aria-label="`放大查看：${title}`">
           <header class="zoom-head">
             <span class="zoom-title">{{ title }}</span>
-            <button ref="closeBtn" class="zoom-close" type="button" title="关闭（Esc）" @click="close">✕</button>
+             <button ref="closeBtn" class="zoom-close" type="button" aria-label="关闭图表弹层" title="关闭（Esc）" @click="close">✕</button>
           </header>
           <div class="zoom-body">
             <slot />
@@ -99,7 +102,8 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 10px;
+  min-height: 40px;
+  padding: 7px 10px;
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 8px;
   background: rgba(10, 15, 30, 0.72);
@@ -180,8 +184,8 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 .zoom-close {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   flex: none;
@@ -192,7 +196,7 @@ onBeforeUnmount(() => {
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
 }
 .zoom-close:hover {
   color: #fff;
