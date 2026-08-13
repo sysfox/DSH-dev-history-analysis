@@ -2,6 +2,8 @@
 
 `DEVELOPMENT-HISTORY.md`（5,567 行）的可交互可视化呈现 —— DeepSeek Harness 65 天开发历程（12,293 次提交）的完整图景。
 
+> **研究与开发：DSH + DeepSeek V4 Flash**
+
 ## 技术栈
 
 Vue 3 · Vite · vue-router · ECharts · Mermaid · markdown-it · highlight.js

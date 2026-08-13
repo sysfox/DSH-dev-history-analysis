@@ -23,6 +23,7 @@ import { HEAD } from '../lib/data'
         <div class="footer-title">技术栈</div>
         <p class="mono small">Vue 3 · Vite · ECharts · Mermaid · markdown-it</p>
         <p class="mono small dim">git log --format="%ad" --date=short | 全量聚合</p>
+        <p class="footer-credit">研究与开发：DSH + DeepSeek V4 Flash</p>
       </div>
     </div>
     <div class="container footer-bar">
@@ -63,6 +64,11 @@ import { HEAD } from '../lib/data'
 }
 .footer .dim {
   color: var(--ink-4);
+}
+.footer-credit {
+  margin-top: 10px;
+  color: var(--cyan) !important;
+  font-size: 11.5px !important;
 }
 .footer-bar {
   display: flex;
